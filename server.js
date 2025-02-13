@@ -22,11 +22,11 @@ app.get('/', (req, res) => {
     res.send('Express + PostgreSQL API is running!');
 });
 
+// Start Server only if not in test mode
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+}
 
-
-// Start Server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
-
-module.exports = app;
+module.exports = {app,connection};
