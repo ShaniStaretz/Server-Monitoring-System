@@ -26,7 +26,7 @@ app.use(express.json());
 
 
 
-monitorServerStatus();
+monitorServerStatus(connection);
 
  // Test Route
  app.get('/', (req, res) => {
