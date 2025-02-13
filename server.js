@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const connection = require('./db_functions'); // Import the database pool
+const {connection} = require('./db_functions'); // Import the database pool
 const monitorServerStatus = require('./monitorWorker');
 const shutdown =require('./shutdown')
 const app = express();
@@ -19,7 +19,7 @@ app.use(express.json());
 
 
 
-const intervalId=monitorServerStatus(connection);
+const intervalId=monitorServerStatus();
 
 
 

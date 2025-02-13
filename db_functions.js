@@ -1,4 +1,3 @@
-const { Pool } = require("pg");
 const pg = require("pg");
 
 // PostgreSQL Connection Pool
@@ -9,7 +8,6 @@ const connection = new pg.Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
-console.debug("db.pool:", connection);
 check_onnection();
 
 connection.on("error", function (err, client) {
@@ -39,7 +37,7 @@ async function executeFunction(function_name, args) {
   try {
     const client = await connection.connect();
     try {
-      res.result = await client.query("SELECT * FROM" + function_name, args);
+      res.result = await client.query("CALL " + function_name, args);
     } catch (err) {
       res.error = err.message;
       console.error( "[db_queries|" + arguments.cllerr.name + "] Error calling db function" +  err.message
