@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
+const monitorServerStatus = require('./monitorWorker');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,6 +23,10 @@ app.use(express.json());
     name: 'Web Severs Monitoring Syatem',
     url: `http://localhost:${port}`
 };
+
+
+
+monitorServerStatus();
 
  // Test Route
  app.get('/', (req, res) => {
