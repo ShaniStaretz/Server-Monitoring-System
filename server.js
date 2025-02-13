@@ -17,9 +17,15 @@ const connection = new Pool({
 // Middleware
 app.use(express.json());
 
-// Test Route
-app.get('/', (req, res) => {
-    res.send('Express + PostgreSQL API is running!');
+ // Server Data Structure
+ const serverData = {
+    name: 'Web Severs Monitoring Syatem',
+    url: `http://localhost:${port}`
+};
+
+ // Test Route
+ app.get('/', (req, res) => {
+    res.json({ message: 'Express + PostgreSQL API is running!', server: serverData });
 });
 
 // Start Server only if not in test mode
