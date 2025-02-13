@@ -1,19 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const { Pool } = require('pg');
+const connection = require('./db_functions'); // Import the database pool
 const monitorServerStatus = require('./monitorWorker');
-
+const shutdown =require('./shutdown')
 const app = express();
 const port = process.env.PORT || 5000;
 
-// PostgreSQL Connection Pool
-const connection = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-});
+
 
 // Middleware
 app.use(express.json());
@@ -26,7 +19,9 @@ app.use(express.json());
 
 
 
-monitorServerStatus(connection);
+const intervalId=monitorServerStatus(connection);
+
+
 
  // Test Route
  app.get('/', (req, res) => {
@@ -39,5 +34,8 @@ if (require.main === module) {
         console.log(`Server is running on http://localhost:${port}`);
     });
 }
+// Handle graceful shutdown
+process.on('SIGINT', () => shutdown(connection, intervalId)); //signal interrupt
+process.on('SIGTERM', () => shutdown(connection, intervalId)); //signal Terminate
 
 module.exports = {app,connection};
