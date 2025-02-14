@@ -42,7 +42,12 @@ async function check_onnection() {
     var client = await pool.connect();
     console.info("db pool successful");
   } catch (error) {
-    console.error("[db] Error connecting to db" + error.message);
+    console.error(
+      "[db] Error connecting to db:" +
+        error.message +
+        " with code:" +
+        error.code
+    );
   } finally {
     client.release();
   }
@@ -65,14 +70,20 @@ async function executeFunction(is_get, function_name, args = null) {
       query_Str += paramPlaceholders ? `(${paramPlaceholders})` : `()`;
       res.result = await client.query(query_Str, args);
     } catch (err) {
-      res.error = err.message;
+      res.error = { message: err.message, code: err.code || "UNKNOWN_ERROR" };
       console.error("[db_queries] Error calling db function:" + err.message);
     } finally {
       client.release();
     }
   } catch (err) {
+    console.error(err);
     res.error = err.message;
-    console.error("[db_queries] Error connecting to db:" + err.message);
+    console.error(
+      "[db_queries] Error connecting to db:" +
+        err.message +
+        " with code:" +
+        err.code
+    );
   }
   pool.removeAllListeners();
   return res;
@@ -85,14 +96,15 @@ async function executeQuery(query_Str, params = null) {
     try {
       res.result = await client.query(query_Str, params);
     } catch (err) {
-      res.error = err.message;
-      console.error("[db_queries] Error calling db query" + err.message);
+      
+      res.error = { message: err.message, code: err.code || "UNKNOWN_ERROR" };
+      console.error("[db_queries] Error calling db query:" + err.message);
     } finally {
       client.release();
     }
   } catch (err) {
     res.error = err.message;
-    console.error("[db_queries] Error connecting to db" + err.message);
+    console.error("[db_queries] Error connecting to db" + err.message+ " with code:"+err.code);
   }
   pool.removeAllListeners();
   return res;

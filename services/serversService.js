@@ -16,37 +16,56 @@ const addNewSerever = async (serverDetails) => {
     port,
     protocol_id,
   ]);
-  if( result.error){
-    if(result.error.includes("unique")){
-        throw {status:400, message:`the server with name ${server_name} is already exist in the system`}
+  if (result.error) {
+    if (result.error.includes("unique")) {
+      throw {
+        status: 400,
+        message: `the server with name ${server_name} is already exist in the system`,
+      };
     }
-    throw {status:400, message:result.error}
+    throw { status: 400, message: result.error };
   }
-  if(result.result){
-    return  result.result.rows[0].add_server_to_list;
+  if (result.result) {
+    return result.result.rows[0].add_server_to_list;
   }
 };
 
-const udpateExistSerever = async (serverId,serverDetails) => {
-    const { server_name, port, protocol_name } = serverDetails;
-  
-    const protocol_id = await getProtocolIdByName(protocol_name);
-    const result = await executeFunction(true, "update_server", [
-        serverId,
-        server_name,
-      port,
-      protocol_id,
-    ]);
-    if( result.error){
-      if(result.error.includes("unique")){
-          throw {status:400, message:`the server with name ${server_name} is already exist in the system`}
-      }
-      throw {status:400, message:result.error}
+const udpateExistSerever = async (serverId, serverDetails) => {
+  const { server_name, port, protocol_name } = serverDetails;
+
+  const protocol_id = await getProtocolIdByName(protocol_name);
+  const result = await executeFunction(true, "update_server", [
+    serverId,
+    server_name,
+    port,
+    protocol_id,
+  ]);
+  if (result.error) {
+    if ((result.error.code = "23505")) {
+      //UNIQUE constraint
+      throw {
+        status: 400,
+        message: `the server with name ${server_name} is already exist in the system`,
+      };
     }
-    if(result.result){
-      return  result.result.rows[0].update_server;
+    throw { status: 400, message: result.error };
+  }
+  if (result.result) {
+    return result.result.rows[0].update_server;
+  }
+};
+
+const deleteExistSerever = async (serverId) => {
+  const result = await executeFunction(false, "delete_server_by_id", [
+    serverId,
+  ]);
+  if (result.error) {
+    if (result.error.code = "P0002") {
+      throw { status: 404, message: result.error.message };
     }
-  };
+    throw { status: 500, message: result.error.message };
+  }
+};
 
 const getProtocolIdByName = async (protocolName) => {
   try {
@@ -64,4 +83,9 @@ const getProtocolIdByName = async (protocolName) => {
   }
 };
 
-module.exports = { getServersList, addNewSerever,udpateExistSerever };
+module.exports = {
+  getServersList,
+  addNewSerever,
+  udpateExistSerever,
+  deleteExistSerever,
+};
