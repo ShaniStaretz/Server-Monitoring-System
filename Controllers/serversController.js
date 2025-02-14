@@ -3,7 +3,7 @@ const {
   addNewSerever,
   udpateExistSerever,
   deleteExistSerever,
-  getExistSerever
+  getExistSerever,
 } = require("../services/serversService");
 
 // Route handler function
@@ -77,12 +77,10 @@ const handleGetExistServer = async (req, res) => {
 
   try {
     // Call the updateServer function with the data
-   const server= await getExistSerever(serverId);
+    const server = await getExistSerever(serverId);
 
     // Respond with success message
-    res
-      .status(200)
-      .json(server);
+    res.status(200).json(server);
   } catch (error) {
     console.error("❌ Error updating server:", error);
     res

@@ -96,7 +96,6 @@ async function executeQuery(query_Str, params = null) {
     try {
       res.result = await client.query(query_Str, params);
     } catch (err) {
-      
       res.error = { message: err.message, code: err.code || "UNKNOWN_ERROR" };
       console.error("[db_queries] Error calling db query:" + err.message);
     } finally {
@@ -104,7 +103,12 @@ async function executeQuery(query_Str, params = null) {
     }
   } catch (err) {
     res.error = err.message;
-    console.error("[db_queries] Error connecting to db" + err.message+ " with code:"+err.code);
+    console.error(
+      "[db_queries] Error connecting to db" +
+        err.message +
+        " with code:" +
+        err.code
+    );
   }
   pool.removeAllListeners();
   return res;

@@ -1,8 +1,11 @@
 const express = require("express");
 const historyRouter = express.Router();
-// const { getMonitorHistoryByServerId,addMonitorLogByServerId} = require("../controllers/monitorHistoryController");
+const {
+  handleGetExistServerHistory,
+  handleIsServerHealthyByTimestamp,
+} = require("../Controllers/historyController");
 
-// historyRouter.get("/history/:server_id",getMonitorHistoryByServerId)//for testing
-// historyRouter.post("/history/",addMonitorLogByServerId)
+historyRouter.get("/:serverId", handleGetExistServerHistory); //for testing
+historyRouter.get("/health-status/:serverId", handleIsServerHealthyByTimestamp);
 
-module.exports=historyRouter
+module.exports = historyRouter;

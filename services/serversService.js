@@ -60,7 +60,7 @@ const deleteExistSerever = async (serverId) => {
     serverId,
   ]);
   if (result.error) {
-    if (result.error.code = "P0002") {
+    if ((result.error.code = "P0002")) {
       throw { status: 404, message: result.error.message };
     }
     throw { status: 500, message: result.error.message };
@@ -68,18 +68,16 @@ const deleteExistSerever = async (serverId) => {
 };
 
 const getExistSerever = async (serverId) => {
-    const result = await executeFunction(true, "get_server_by_id", [
-      serverId,
-    ]);
-    if (result.error) {
-      if (result.error.code = "P0002") {
-        throw { status: 404, message: result.error.message };
-      }
-      throw { status: 500, message: result.error.message };
+  const result = await executeFunction(true, "get_server_by_id", [serverId]);
+  if (result.error) {
+    if ((result.error.code = "P0002")) {
+      throw { status: 404, message: result.error.message };
     }
-    
-    return result.result.rows[0]
-  };
+    throw { status: 500, message: result.error.message };
+  }
+
+  return result.result.rows[0];
+};
 
 const getProtocolIdByName = async (protocolName) => {
   try {
@@ -92,7 +90,7 @@ const getProtocolIdByName = async (protocolName) => {
       throw result.error; // No protocol found
     }
   } catch (error) {
-    console.error("❌ Error fetching protocol id:", error);
+    console.error("Error fetching protocol id:", error);
     throw new Error("Database query failed");
   }
 };
@@ -102,5 +100,5 @@ module.exports = {
   addNewSerever,
   udpateExistSerever,
   deleteExistSerever,
-  getExistSerever
+  getExistSerever,
 };
