@@ -22,7 +22,7 @@ async function callProcedureOnce(procedureName) {
 
 async function initTables() {
   const procedures = [
-    "create_protocol_list_table", // Replace with actual procedure names
+    "create_protocols_list_table", // Replace with actual procedure names
     "create_servers_list_table", // Replace with actual procedure names
    
     "create_monitor_history_table" // Replace with actual procedure names

@@ -67,6 +67,20 @@ const deleteExistSerever = async (serverId) => {
   }
 };
 
+const getExistSerever = async (serverId) => {
+    const result = await executeFunction(true, "get_server_by_id", [
+      serverId,
+    ]);
+    if (result.error) {
+      if (result.error.code = "P0002") {
+        throw { status: 404, message: result.error.message };
+      }
+      throw { status: 500, message: result.error.message };
+    }
+    
+    return result.result.rows[0]
+  };
+
 const getProtocolIdByName = async (protocolName) => {
   try {
     const result = await executeFunction(true, "get_protocol_id_by_name", [
@@ -88,4 +102,5 @@ module.exports = {
   addNewSerever,
   udpateExistSerever,
   deleteExistSerever,
+  getExistSerever
 };
