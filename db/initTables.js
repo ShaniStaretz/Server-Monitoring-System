@@ -1,5 +1,5 @@
 
-const {executeFunction} = require("./db_functions"); // Import the pool from your pool.js
+const {executeFunction} = require("./db_functions"); // Import the executeFunction from your db_functions.js
 
 let procedureCalled = new Set(); // Track procedures that have been called
 

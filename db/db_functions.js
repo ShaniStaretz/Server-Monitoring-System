@@ -49,16 +49,21 @@ async function check_onnection() {
   pool.removeAllListeners();
 }
 
-async function executeFunction(is_get, function_name, args=null) {
+async function executeFunction(is_get, function_name, args = null) {
   let res = { result: null, error: null };
+
   try {
     const client = await pool.connect();
+
     try {
-      if (is_get) {
-        res.result = await client.query("SELECT * FROM " + function_name, args);
-      } else {
-        res.result = await client.query(`CALL  ${function_name}()`, args);
-      }
+      // Create a query string with placeholders for parameters
+      const paramPlaceholders = !args
+        ? null
+        : args.map((_, index) => `$${index + 1}`).join(", ");
+      let query_Str = is_get ? "SELECT * FROM " : "CALL ";
+      query_Str += `${function_name}`;
+      query_Str += paramPlaceholders ? `(${paramPlaceholders})` : `()`;
+      res.result = await client.query(query_Str, args);
     } catch (err) {
       res.error = err.message;
       console.error("[db_queries] Error calling db function:" + err.message);
@@ -78,8 +83,7 @@ async function executeQuery(query_Str, params = null) {
   try {
     const client = await pool.connect();
     try {
-        res.result = await client.query(query_Str,params);
-   
+      res.result = await client.query(query_Str, params);
     } catch (err) {
       res.error = err.message;
       console.error("[db_queries] Error calling db query" + err.message);

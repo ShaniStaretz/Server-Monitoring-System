@@ -4,15 +4,16 @@ const initTables = require("./db/initTables");
 const createTriggers = require("./db/initTriggers"); // Import the initTables function
 const monitorServerStatus = require("./workers/monitor_worker");
 const shutdown = require("./utils/shutdown");
-
-const { monitorHistoryRoutes } = require("./routes/historyRoutes");
+const serversRoutes = require("./routes/serversRoutes");
+const monitorHistoryRoutes  = require("./routes/historyRoutes");
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
 // Use the routes
-// app.use(monitorHistoryRoutes);
+app.use("/api/history",monitorHistoryRoutes);
+app.use("/api/servers",serversRoutes);
 
 // Server Data Structure
 const serverData = {
