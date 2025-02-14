@@ -9,7 +9,7 @@ const getServersList = async () => {
 
 const addNewSerever = async (serverDetails) => {
   const { server_name, port, protocol_name } = serverDetails;
-  console.log(serverDetails)
+
   const protocol_id = await getProtocolIdByName(protocol_name);
   const result = await executeFunction(true, "add_server_to_list", [
     server_name,
@@ -23,9 +23,30 @@ const addNewSerever = async (serverDetails) => {
     throw {status:400, message:result.error}
   }
   if(result.result){
-    return  result.rows[0].add_server_to_list;
+    return  result.result.rows[0].add_server_to_list;
   }
 };
+
+const udpateExistSerever = async (serverId,serverDetails) => {
+    const { server_name, port, protocol_name } = serverDetails;
+  
+    const protocol_id = await getProtocolIdByName(protocol_name);
+    const result = await executeFunction(true, "update_server", [
+        serverId,
+        server_name,
+      port,
+      protocol_id,
+    ]);
+    if( result.error){
+      if(result.error.includes("unique")){
+          throw {status:400, message:`the server with name ${server_name} is already exist in the system`}
+      }
+      throw {status:400, message:result.error}
+    }
+    if(result.result){
+      return  result.result.rows[0].update_server;
+    }
+  };
 
 const getProtocolIdByName = async (protocolName) => {
   try {
@@ -43,4 +64,4 @@ const getProtocolIdByName = async (protocolName) => {
   }
 };
 
-module.exports = { getServersList, addNewSerever };
+module.exports = { getServersList, addNewSerever,udpateExistSerever };
