@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
-const {connection} = require('./db_functions'); // Import the database pool
-const monitorServerStatus = require('./monitor_worker');
-const shutdown =require('./shutdown')
+const {connection} = require('./db/db_functions'); // Import the database pool
+const monitorServerStatus = require('./workers/monitor_worker');
+const shutdown =require('./utils/shutdown')
 const app = express();
 const port = process.env.PORT || 5000;
 
