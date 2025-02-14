@@ -85,14 +85,34 @@ const triggers = [
       `,
   },
 ];
+// Function to check if a trigger exists
+const triggerExists = async (triggerName) => {
+  const result = await executeQuery(
+    `SELECT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = $1
+      )`,
+    [triggerName]
+  );
+  return result.rowCount > 0;
+};
 
 // Function to create all triggers from the list
 const createTriggers = async () => {
   try {
-    console.log("🔧 Setting up database triggers...");
+    console.log("Setting up database triggers...");
 
     await Promise.all(
       triggers.map(async (t) => {
+        console.log(`Checking if trigger function for: ${t.name} exists...`);
+        await executeQuery(t.function); // Always create or replace the function
+
+        const exists = await triggerExists(t.name);
+        if (!exists) {
+          console.log(`Creating trigger: ${t.name}`);
+          await executeQuery(t.trigger);
+        } else {
+          console.log(`Trigger '${t.name}' already exists, skipping creation.`);
+        }
         console.log(`Creating trigger function for: ${t.name}`);
         await executeQuery(t.function);
 

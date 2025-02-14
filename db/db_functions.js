@@ -42,17 +42,14 @@ async function check_onnection() {
     var client = await pool.connect();
     console.info("db pool successful");
   } catch (error) {
-    console.error(
-      "[db] Error connecting to db" +
-        error.message
-    );
+    console.error("[db] Error connecting to db" + error.message);
   } finally {
     client.release();
   }
   pool.removeAllListeners();
 }
 
-async function executeFunction(is_get, function_name, args) {
+async function executeFunction(is_get, function_name, args=null) {
   let res = { result: null, error: null };
   try {
     const client = await pool.connect();
@@ -64,43 +61,34 @@ async function executeFunction(is_get, function_name, args) {
       }
     } catch (err) {
       res.error = err.message;
-      console.error( "[db_queries] Error calling db function:" + err.message)
-   
+      console.error("[db_queries] Error calling db function:" + err.message);
     } finally {
       client.release();
     }
   } catch (err) {
     res.error = err.message;
-    console.error(
-      "[db_queries] Error connecting to db:" +
-        err.message
-    );
+    console.error("[db_queries] Error connecting to db:" + err.message);
   }
   pool.removeAllListeners();
   return res;
 }
 
-async function executeQuery(query_Str) {
+async function executeQuery(query_Str, params = null) {
   let res = { result: null, error: null };
   try {
     const client = await pool.connect();
     try {
-      res.result = await client.query(query_Str);
+        res.result = await client.query(query_Str,params);
+   
     } catch (err) {
       res.error = err.message;
-      console.error(
-        "[db_queries] Error calling db query" +
-          err.message
-      );
+      console.error("[db_queries] Error calling db query" + err.message);
     } finally {
       client.release();
     }
   } catch (err) {
     res.error = err.message;
-    console.error(
-      "[db_queries] Error connecting to db" +
-        err.message
-    );
+    console.error("[db_queries] Error connecting to db" + err.message);
   }
   pool.removeAllListeners();
   return res;
