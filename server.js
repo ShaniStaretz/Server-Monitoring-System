@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-
+const initTables = require("./db/initTables");
+const createTriggers = require("./db/initTriggers"); // Import the initTables function
 const monitorServerStatus = require("./workers/monitor_worker");
 const shutdown = require("./utils/shutdown");
 
@@ -29,8 +30,12 @@ app.get("/", (req, res) => {
   });
 });
 
-const server = app.listen(port, () => {
+const server = app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
+  // Initialize tables first
+  await initTables();
+  // Initialize triggers
+  await createTriggers();
 });
 
 // Handle graceful shutdown

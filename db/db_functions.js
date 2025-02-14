@@ -43,9 +43,7 @@ async function check_onnection() {
     console.info("db pool successful");
   } catch (error) {
     console.error(
-      "[db|" +
-        arguments.cllerr.name +
-        "] Error connecting to db" +
+      "[db] Error connecting to db" +
         error.message
     );
   } finally {
@@ -62,25 +60,19 @@ async function executeFunction(is_get, function_name, args) {
       if (is_get) {
         res.result = await client.query("SELECT * FROM " + function_name, args);
       } else {
-        res.result = await client.query("CALL " + function_name, args);
+        res.result = await client.query(`CALL  ${function_name}()`, args);
       }
     } catch (err) {
       res.error = err.message;
-      console.error(
-        "[db_queries|" +
-          arguments.cllerr.name +
-          "] Error calling db function" +
-          err.message
-      );
+      console.error( "[db_queries] Error calling db function:" + err.message)
+   
     } finally {
       client.release();
     }
   } catch (err) {
     res.error = err.message;
     console.error(
-      "[db_queries|" +
-        arguments.cllerr.name +
-        "] Error connecting to db" +
+      "[db_queries] Error connecting to db:" +
         err.message
     );
   }
@@ -97,9 +89,7 @@ async function executeQuery(query_Str) {
     } catch (err) {
       res.error = err.message;
       console.error(
-        "[db_queries|" +
-          arguments.cllerr.name +
-          "] Error calling db query" +
+        "[db_queries] Error calling db query" +
           err.message
       );
     } finally {
@@ -108,9 +98,7 @@ async function executeQuery(query_Str) {
   } catch (err) {
     res.error = err.message;
     console.error(
-      "[db_queries|" +
-        arguments.cllerr.name +
-        "] Error connecting to db" +
+      "[db_queries] Error connecting to db" +
         err.message
     );
   }
