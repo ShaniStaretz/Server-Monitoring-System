@@ -51,27 +51,31 @@ const addNewSerever = async (serverDetails) => {
 };
 
 const udpateExistSerever = async (serverId, serverDetails) => {
-  const { server_name, port, protocol_name } = serverDetails;
+  const { server_name, server_url = null, port, protocol_name } = serverDetails;
 
-  const protocol_id = await getProtocolIdByName(protocol_name);
-  const result = await executeFunction(true, "update_server", [
-    serverId,
-    server_name,
-    port,
-    protocol_id,
-  ]);
-  if (result.error) {
-    if ((result.error.code = "23505")) {
+  let response;
+  let values = [serverId, server_name, server_url, port];
+  if (protocol_name) {
+    const protocol_id = await getProtocolIdByName(protocol_name);
+    values.push(protocol_id);
+  }
+
+  response = await executeFunction(true, "update_server", values);
+
+  if (response.error) {
+    if ((response.error.code = "23505")) {
       //UNIQUE constraint
       throw {
         status: 400,
-        message: `the server with name ${server_name} is already exist in the system`,
+        message: `The server doesn't exist in the system`,
       };
+    } else if ((response.error.code = "P0002")) {
+      //not exist
+      throw { status: 404, message: response.error };
     }
-    throw { status: 400, message: result.error };
   }
-  if (result.result) {
-    return result.result.rows[0].update_server;
+  if (response.result) {
+    return response.result.rows[0].update_server;
   }
 };
 
