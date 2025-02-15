@@ -9,28 +9,25 @@ const { getServersList } = require("../services/serversService");
 const monitorServerStatus = () => {
   console.log("[worker] Start worker");
 
-  const intervalId = setInterval(checkServersHealth, 6000); // Runs every 60 seconds
+  const intervalId = setInterval(checkServersHealth, 60000); // Runs every 60 seconds
 
   return intervalId;
 };
 
 const checkServersHealth = async () => {
   try {
-    // console.log("added success");
-    // await addMonitoryLogByServerId(3);
     let servers = await getServersList();
     for (const server of servers) {
       let isSuccess = await checkServerHealth(server);
       if(!isSuccess){
-        console.log("will log Failed for server:",server.server_name)
+        console.log("[worker] will log Failed for server:",server.server_name)
         await addMonitoryLogByServerId(server.server_id,'Failed');
       }
       else{
-        console.log("will log Success for server:",server.server_name)
+        console.log("[worker] will log Success for server:",server.server_name)
         await addMonitoryLogByServerId(server.server_id);
       }
     }
-    // console.log(`[Worker] Server is healthy at ${new Date().toISOString()}`);
   } catch (err) {
     console.error(`[Worker] Server issue detected: ${err.message}`);
   }
