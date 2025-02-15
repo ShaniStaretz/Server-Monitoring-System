@@ -1,4 +1,4 @@
-const { executeQuery } = require("./db_functions"); 
+const { executeQuery, executeFunction } = require("./db_functions"); 
 
 //List of triggers
 const triggers = [
@@ -17,14 +17,7 @@ const triggers = [
           END;
           $$ LANGUAGE plpgsql;
       `,
-    trigger: `
-          DROP TRIGGER IF EXISTS server_status_trigger ON servers_list;
-          CREATE TRIGGER server_status_trigger
-          AFTER UPDATE ON servers_list
-          FOR EACH ROW
-          WHEN (NEW.current_status = 'Unhealthy')
-          EXECUTE FUNCTION notify_on_unhealthy_status();
-      `,
+    trigger: "create_notify_on_unhealthy_status_trigger",
   },
   {
     name: "monitor_success_trigger",
@@ -57,13 +50,7 @@ const triggers = [
           $$ LANGUAGE plpgsql;
 
       `,
-    trigger: `
-          DROP TRIGGER IF EXISTS monitor_success_trigger ON monitor_history;
-          CREATE TRIGGER monitor_success_trigger
-          AFTER INSERT ON monitor_history
-          FOR EACH ROW
-          EXECUTE FUNCTION update_server_status_on_success();
-      `,
+    trigger: "create_monitor_success_trigger",
   },
   {
     name: "monitor_unsuccessful_trigger",
@@ -94,26 +81,10 @@ const triggers = [
           END;
           $$ LANGUAGE plpgsql;
       `,
-    trigger: `
-          DROP TRIGGER IF EXISTS monitor_unsuccessful_trigger ON monitor_history;
-          CREATE TRIGGER monitor_unsuccessful_trigger
-          AFTER INSERT ON monitor_history
-          FOR EACH ROW
-          EXECUTE FUNCTION update_server_status_on_unsuccessful();
-      `,
+    trigger: "create_monitor_unsuccessful_trigger",
   },
 ];
-// Function to check if a trigger exists
-const triggerExists = async (triggerName) => {
-  console.log("triggerName:",triggerName)
-  const result = await executeQuery(
-    `SELECT EXISTS (
-          SELECT 1 FROM pg_trigger WHERE tgname = $1
-      )`,
-    [triggerName]
-  );
-  return result.result.rowCount > 0;
-};
+
 
 // Create all triggers from the list
 const createTriggers = async () => {
@@ -122,22 +93,11 @@ const createTriggers = async () => {
 
     await Promise.all(
       triggers.map(async (t) => {
-        console.log(`[initTriggers] Checking if trigger function for: ${t.name} exists...`);
-        await executeQuery(t.function); // Always create or replace the function
-
-        const exists = await triggerExists(t.name);
-        console.log(exists)
-        if (!exists) {
-          console.log(`[initTriggers] Creating trigger: ${t.name}`);
-          await executeQuery(t.trigger);
-        } else {
-          console.log(`[initTriggers] Trigger '${t.name}' already exists, skipping creation.`);
-        }
         console.log(`[initTriggers] Creating trigger function for: ${t.name}`);
         await executeQuery(t.function);
 
         console.log(`[initTriggers] Creating trigger: ${t.name}`);
-        await executeQuery(t.trigger);
+        await executeFunction(true,t.trigger);
       })
     );
 
