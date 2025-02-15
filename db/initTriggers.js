@@ -18,6 +18,7 @@ const triggers = [
           $$ LANGUAGE plpgsql;
       `,
     trigger: `
+          DROP TRIGGER IF EXISTS server_status_trigger ON servers_list;
           CREATE TRIGGER server_status_trigger
           AFTER UPDATE ON servers_list
           FOR EACH ROW
@@ -57,6 +58,7 @@ const triggers = [
 
       `,
     trigger: `
+          DROP TRIGGER IF EXISTS monitor_success_trigger ON monitor_history;
           CREATE TRIGGER monitor_success_trigger
           AFTER INSERT ON monitor_history
           FOR EACH ROW
@@ -64,7 +66,7 @@ const triggers = [
       `,
   },
   {
-    name: "monitor_unsuccess_trigger",
+    name: "monitor_unsuccessful_trigger",
     function: `
           CREATE OR REPLACE FUNCTION update_server_status_on_unsuccessful()
           RETURNS TRIGGER AS $$
@@ -93,6 +95,7 @@ const triggers = [
           $$ LANGUAGE plpgsql;
       `,
     trigger: `
+          DROP TRIGGER IF EXISTS monitor_unsuccessful_trigger ON monitor_history;
           CREATE TRIGGER monitor_unsuccessful_trigger
           AFTER INSERT ON monitor_history
           FOR EACH ROW
@@ -102,13 +105,14 @@ const triggers = [
 ];
 // Function to check if a trigger exists
 const triggerExists = async (triggerName) => {
+  console.log("triggerName:",triggerName)
   const result = await executeQuery(
     `SELECT EXISTS (
           SELECT 1 FROM pg_trigger WHERE tgname = $1
       )`,
     [triggerName]
   );
-  return result.rowCount > 0;
+  return result.result.rowCount > 0;
 };
 
 // Create all triggers from the list
@@ -122,6 +126,7 @@ const createTriggers = async () => {
         await executeQuery(t.function); // Always create or replace the function
 
         const exists = await triggerExists(t.name);
+        console.log(exists)
         if (!exists) {
           console.log(`[initTriggers] Creating trigger: ${t.name}`);
           await executeQuery(t.trigger);
