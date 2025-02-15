@@ -33,7 +33,7 @@
 			"response": []
 		},
 		{
-			"name": "Create a Server",
+			"name": "Create a Server-failed-url-format",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -45,7 +45,76 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"server_name\": \"New Server\",\r\n  \"port\": 8080,\r\n  \"protocol_id\": 1\r\n}",
+					"raw": "{\r\n  \"server_name\": \"ftp5\",\r\n  \"server_url\":\"sss://ftp.dlptest\",\r\n  \"username\":\"dlpuser\",\r\n  \"password\":\"rNrKYTX9g7z3RgJRmxWuGHbeu\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/servers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"servers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create a Server - success",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"server_name\": \"ftp5\",\r\n  \"server_url\":\"ftp://ftp.dlptest\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/servers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"servers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create a Server -success-with-user-password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"server_name\": \"ftp5\",\r\n  \"server_url\":\"ftp://ftp.dlptest\",\r\n  \"username\":\"dlpuser\",\r\n  \"password\":\"rNrKYTX9g7z3RgJRmxWuGHbeu\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -68,6 +137,37 @@
 		},
 		{
 			"name": "Update a Server",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"currentStatus\": \"Unhealthy\",\r\n    \"serverName\": \"Updated Server Name\",\r\n    \"port\": 9090,\r\n    \"protocolId\": 2\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/servers/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"servers",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update a Server Copy",
 			"request": {
 				"method": "PUT",
 				"header": [
@@ -180,19 +280,48 @@
 			"response": []
 		},
 		{
-			"name": "Get If a Server was Healthy by Timestamp",
+			"name": "Get If a Server was Healthy by Timestamp-success",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/servers/health-status/1?timestamp=2024-02-14T10:30:00Z",
+					"raw": "http://localhost:5000/api/history/health-status/10?timestamp=2025-02-15 14:25:18",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "5000",
 					"path": [
-						"servers",
+						"api",
+						"history",
+						"health-status",
+						"10"
+					],
+					"query": [
+						{
+							"key": "timestamp",
+							"value": "2025-02-15 14:25:18"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get If a Server was Healthy by Timestamp -failed-timestamp-format",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/history/health-status/1?timestamp=2024-02-14T10:30:00Z",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"history",
 						"health-status",
 						"1"
 					],

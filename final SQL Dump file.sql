@@ -5,7 +5,7 @@
 -- Dumped from database version 16.6
 -- Dumped by pg_dump version 16.6
 
--- Started on 2025-02-15 21:17:20
+-- Started on 2025-02-15 23:22:19
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -37,7 +37,7 @@ $$;
 ALTER PROCEDURE public.add_monitor_log_to_history(IN p_server_id integer, IN p_status text) OWNER TO postgres;
 
 --
--- TOC entry 247 (class 1255 OID 16574)
+-- TOC entry 248 (class 1255 OID 16574)
 -- Name: add_server_to_list(text, text, integer, integer, text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -159,7 +159,7 @@ END $$;
 ALTER FUNCTION public.create_notify_on_unhealthy_status_trigger() OWNER TO postgres;
 
 --
--- TOC entry 238 (class 1255 OID 16518)
+-- TOC entry 239 (class 1255 OID 16518)
 -- Name: create_protocols_list_table(); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -188,7 +188,7 @@ $$;
 ALTER PROCEDURE public.create_protocols_list_table() OWNER TO postgres;
 
 --
--- TOC entry 235 (class 1255 OID 16400)
+-- TOC entry 236 (class 1255 OID 16400)
 -- Name: create_servers_list_table(); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -217,7 +217,7 @@ $$;
 ALTER PROCEDURE public.create_servers_list_table() OWNER TO postgres;
 
 --
--- TOC entry 222 (class 1255 OID 16404)
+-- TOC entry 223 (class 1255 OID 16404)
 -- Name: delete_server_by_id(integer); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -239,7 +239,7 @@ $$;
 ALTER PROCEDURE public.delete_server_by_id(IN p_server_id integer) OWNER TO postgres;
 
 --
--- TOC entry 221 (class 1255 OID 16403)
+-- TOC entry 222 (class 1255 OID 16403)
 -- Name: delete_server_by_name(text); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -261,7 +261,7 @@ $$;
 ALTER PROCEDURE public.delete_server_by_name(IN p_server_name text) OWNER TO postgres;
 
 --
--- TOC entry 246 (class 1255 OID 16575)
+-- TOC entry 247 (class 1255 OID 16575)
 -- Name: get_all_servers_list(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -303,7 +303,7 @@ $$;
 ALTER FUNCTION public.get_monitor_history_by_server(p_server_id integer) OWNER TO postgres;
 
 --
--- TOC entry 236 (class 1255 OID 16505)
+-- TOC entry 237 (class 1255 OID 16505)
 -- Name: get_protocol_id_by_name(text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -324,7 +324,7 @@ $$;
 ALTER FUNCTION public.get_protocol_id_by_name(in_protocol_name text) OWNER TO postgres;
 
 --
--- TOC entry 248 (class 1255 OID 16576)
+-- TOC entry 249 (class 1255 OID 16576)
 -- Name: get_server_by_id(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -371,7 +371,7 @@ $$;
 ALTER FUNCTION public.get_server_by_id(p_server_id integer) OWNER TO postgres;
 
 --
--- TOC entry 234 (class 1255 OID 16412)
+-- TOC entry 235 (class 1255 OID 16412)
 -- Name: is_server_healthy(integer, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -386,7 +386,7 @@ BEGIN
     INTO last_status
     FROM monitor_history
     WHERE server_id = p_server_id
-    AND "timestamp" BETWEEN (p_timestamp - INTERVAL '1 minute') AND (p_timestamp + INTERVAL '1 minute')
+    AND "timestamp" BETWEEN (p_timestamp::timestamp - INTERVAL '1 minute') AND (p_timestamp::timestamp + INTERVAL '1 minute')
     ORDER BY "timestamp" DESC
     LIMIT 1;
 
@@ -396,7 +396,7 @@ BEGIN
     END IF;
 
     -- Return true if the last status is 'Healthy', otherwise false
-    RETURN last_status = 'Healthy';
+    RETURN last_status = 'Success';
 END;
 $$;
 
@@ -404,7 +404,7 @@ $$;
 ALTER FUNCTION public.is_server_healthy(p_server_id integer, p_timestamp timestamp without time zone) OWNER TO postgres;
 
 --
--- TOC entry 239 (class 1255 OID 16551)
+-- TOC entry 246 (class 1255 OID 16551)
 -- Name: notify_on_unhealthy_status(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -425,7 +425,7 @@ CREATE FUNCTION public.notify_on_unhealthy_status() RETURNS trigger
 ALTER FUNCTION public.notify_on_unhealthy_status() OWNER TO postgres;
 
 --
--- TOC entry 249 (class 1255 OID 16581)
+-- TOC entry 250 (class 1255 OID 16581)
 -- Name: update_server(integer, text, text, integer, integer, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -461,7 +461,7 @@ $$;
 ALTER FUNCTION public.update_server(p_server_id integer, p_server_name text, p_server_url text, p_port integer, p_protocol_id integer, p_current_status text) OWNER TO postgres;
 
 --
--- TOC entry 237 (class 1255 OID 16547)
+-- TOC entry 238 (class 1255 OID 16547)
 -- Name: update_server_status_on_success(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -497,7 +497,7 @@ CREATE FUNCTION public.update_server_status_on_success() RETURNS trigger
 ALTER FUNCTION public.update_server_status_on_success() OWNER TO postgres;
 
 --
--- TOC entry 250 (class 1255 OID 16544)
+-- TOC entry 251 (class 1255 OID 16544)
 -- Name: update_server_status_on_unsuccessful(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -536,6 +536,18 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- TOC entry 221 (class 1259 OID 16582)
+-- Name: last_status; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.last_status (
+    status text
+);
+
+
+ALTER TABLE public.last_status OWNER TO postgres;
+
+--
 -- TOC entry 220 (class 1259 OID 16527)
 -- Name: monitor_history; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -568,7 +580,7 @@ CREATE SEQUENCE public.monitor_history_monitor_id_seq
 ALTER SEQUENCE public.monitor_history_monitor_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4946 (class 0 OID 0)
+-- TOC entry 4951 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: monitor_history_monitor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -607,7 +619,7 @@ CREATE SEQUENCE public.protocol_list_protocol_id_seq
 ALTER SEQUENCE public.protocol_list_protocol_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4947 (class 0 OID 0)
+-- TOC entry 4952 (class 0 OID 0)
 -- Dependencies: 215
 -- Name: protocol_list_protocol_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -653,7 +665,7 @@ CREATE SEQUENCE public.servers_list_server_id_seq
 ALTER SEQUENCE public.servers_list_server_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4948 (class 0 OID 0)
+-- TOC entry 4953 (class 0 OID 0)
 -- Dependencies: 217
 -- Name: servers_list_server_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -662,7 +674,7 @@ ALTER SEQUENCE public.servers_list_server_id_seq OWNED BY public.servers_list.se
 
 
 --
--- TOC entry 4768 (class 2604 OID 16530)
+-- TOC entry 4772 (class 2604 OID 16530)
 -- Name: monitor_history monitor_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -670,7 +682,7 @@ ALTER TABLE ONLY public.monitor_history ALTER COLUMN monitor_id SET DEFAULT next
 
 
 --
--- TOC entry 4764 (class 2604 OID 16434)
+-- TOC entry 4768 (class 2604 OID 16434)
 -- Name: protocols_list protocol_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -678,7 +690,7 @@ ALTER TABLE ONLY public.protocols_list ALTER COLUMN protocol_id SET DEFAULT next
 
 
 --
--- TOC entry 4765 (class 2604 OID 16458)
+-- TOC entry 4769 (class 2604 OID 16458)
 -- Name: servers_list server_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -686,12 +698,24 @@ ALTER TABLE ONLY public.servers_list ALTER COLUMN server_id SET DEFAULT nextval(
 
 
 --
--- TOC entry 4940 (class 0 OID 16527)
+-- TOC entry 4945 (class 0 OID 16582)
+-- Dependencies: 221
+-- Data for Name: last_status; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.last_status (status) FROM stdin;
+Success
+\.
+
+
+--
+-- TOC entry 4944 (class 0 OID 16527)
 -- Dependencies: 220
 -- Data for Name: monitor_history; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.monitor_history (monitor_id, server_id, "timestamp", status) FROM stdin;
+89	10	2025-02-15 14:20:19	Success
 46	7	2025-02-15 14:08:22.327452	Failed
 47	8	2025-02-15 14:08:22.330529	Failed
 49	7	2025-02-15 14:08:28.321811	Failed
@@ -723,7 +747,6 @@ COPY public.monitor_history (monitor_id, server_id, "timestamp", status) FROM st
 86	7	2025-02-15 14:19:57.750532	Failed
 87	8	2025-02-15 14:19:57.753263	Failed
 88	9	2025-02-15 14:20:18.898902	Failed
-89	10	2025-02-15 14:20:19.584265	Success
 91	7	2025-02-15 14:20:57.653912	Failed
 92	8	2025-02-15 14:20:57.656559	Failed
 93	9	2025-02-15 14:21:18.821214	Failed
@@ -756,7 +779,7 @@ COPY public.monitor_history (monitor_id, server_id, "timestamp", status) FROM st
 
 
 --
--- TOC entry 4936 (class 0 OID 16431)
+-- TOC entry 4940 (class 0 OID 16431)
 -- Dependencies: 216
 -- Data for Name: protocols_list; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -770,7 +793,7 @@ COPY public.protocols_list (protocol_id, protocol_name) FROM stdin;
 
 
 --
--- TOC entry 4938 (class 0 OID 16455)
+-- TOC entry 4942 (class 0 OID 16455)
 -- Dependencies: 218
 -- Data for Name: servers_list; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -786,16 +809,19 @@ COPY public.servers_list (server_id, current_status, server_name, port, protocol
 21	Healthy	 ftp.dlptest.com3	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:14:51.271731	httpbin.org
 22	Healthy	 ftp.dlptest.com4	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:18:53.16004	 ftp://ftp.dlptest.com/
 23	Healthy	 ftp.dlptest.com5	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:45:23.023391	 ftp://ftp.dlptest.com/
-25	Healthy	 ftp.dlptest.com6	22	3	\N	\N	2025-02-15 18:06:37.134542	 ftp://ftp.dlptest.com/
 26	Healthy	ftp.dlptest.com5	22	3	dlpuser	2288b5652b28474f720a339185f51831:70288db085a104953339d819c8f92a4f1a057df3207a4ab497a316c91aa6a37f	2025-02-15 21:08:44.975442	ftp.dlptest.com
 28	Healthy	ftp	22	3	dlpuser	d6b92cc4a0b115f658b7471b9200133f:fe7045f567c8ae19443edbee42b5cdc6b24076766dc18e07f6ce965f4f81a426	2025-02-15 21:14:31.447113	ftp.dlptest.com
 29	Healthy	ftp2	22	3	dlpuser	df93da30270e352aa4e807464f79a95c:5987694f38bf3d67b55a0ac52996f44de9ea50a66cffd7dabb151b0cafe930e3	2025-02-15 21:15:59.753536	ftp.dlptest.com
+31	Healthy	ftp3	21	3	dlpuser	c5051e8ef1414c5ebbf4201e19f897e7:88430de9fa11ed6b48a95c1fe798301c2fe0f2e3819b01b35ad021e169462f6c	2025-02-15 21:44:10.636077	ftp://ftp.dlptest.com
+32	Healthy	ftp4	21	3	dlpuser	787d4770d7ab9a343967cef43305696f:1f6c0c36054ed4e10dd9a27acba0661391e18352df0107e5f801b1460adde72e	2025-02-15 22:40:13.45308	ftp://ftp.dlptest.co
+34	Healthy	ftp5	21	3	dlpuser	4c256be0dc6b6a31d8d36399477322f5:1812441c2a640bdb2248e4a432884c530761df5d319300670351cf36768508c0	2025-02-15 22:40:26.90452	ftp://ftp.dlptest
+25	Healthy	 ftp.dlptest.com6	21	3	\N	\N	2025-02-15 18:06:37.134542	ftp://ftp.dlptests.com/
 8	Unhealthy	update-server	8080	1	\N	\N	2025-02-15 19:08:01.614934	https://update-server.com
 \.
 
 
 --
--- TOC entry 4949 (class 0 OID 0)
+-- TOC entry 4954 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: monitor_history_monitor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -804,7 +830,7 @@ SELECT pg_catalog.setval('public.monitor_history_monitor_id_seq', 126, true);
 
 
 --
--- TOC entry 4950 (class 0 OID 0)
+-- TOC entry 4955 (class 0 OID 0)
 -- Dependencies: 215
 -- Name: protocol_list_protocol_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -813,16 +839,16 @@ SELECT pg_catalog.setval('public.protocol_list_protocol_id_seq', 4, true);
 
 
 --
--- TOC entry 4951 (class 0 OID 0)
+-- TOC entry 4956 (class 0 OID 0)
 -- Dependencies: 217
 -- Name: servers_list_server_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.servers_list_server_id_seq', 29, true);
+SELECT pg_catalog.setval('public.servers_list_server_id_seq', 34, true);
 
 
 --
--- TOC entry 4783 (class 2606 OID 16537)
+-- TOC entry 4787 (class 2606 OID 16537)
 -- Name: monitor_history monitor_history_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -831,7 +857,7 @@ ALTER TABLE ONLY public.monitor_history
 
 
 --
--- TOC entry 4775 (class 2606 OID 16439)
+-- TOC entry 4779 (class 2606 OID 16439)
 -- Name: protocols_list protocol_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -840,7 +866,7 @@ ALTER TABLE ONLY public.protocols_list
 
 
 --
--- TOC entry 4777 (class 2606 OID 16441)
+-- TOC entry 4781 (class 2606 OID 16441)
 -- Name: protocols_list protocol_list_protocol_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -849,7 +875,7 @@ ALTER TABLE ONLY public.protocols_list
 
 
 --
--- TOC entry 4779 (class 2606 OID 16465)
+-- TOC entry 4783 (class 2606 OID 16465)
 -- Name: servers_list servers_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -858,7 +884,7 @@ ALTER TABLE ONLY public.servers_list
 
 
 --
--- TOC entry 4781 (class 2606 OID 16467)
+-- TOC entry 4785 (class 2606 OID 16467)
 -- Name: servers_list servers_list_server_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -867,7 +893,7 @@ ALTER TABLE ONLY public.servers_list
 
 
 --
--- TOC entry 4789 (class 2620 OID 16568)
+-- TOC entry 4793 (class 2620 OID 16568)
 -- Name: monitor_history monitor_success_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -875,7 +901,7 @@ CREATE TRIGGER monitor_success_trigger AFTER INSERT ON public.monitor_history FO
 
 
 --
--- TOC entry 4786 (class 2620 OID 16553)
+-- TOC entry 4790 (class 2620 OID 16553)
 -- Name: servers_list monitor_unhealthy_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -883,7 +909,7 @@ CREATE TRIGGER monitor_unhealthy_status_trigger AFTER UPDATE OF current_status O
 
 
 --
--- TOC entry 4790 (class 2620 OID 16546)
+-- TOC entry 4794 (class 2620 OID 16546)
 -- Name: monitor_history monitor_unsuccess_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -891,7 +917,7 @@ CREATE TRIGGER monitor_unsuccess_trigger AFTER INSERT ON public.monitor_history 
 
 
 --
--- TOC entry 4791 (class 2620 OID 16570)
+-- TOC entry 4795 (class 2620 OID 16570)
 -- Name: monitor_history monitor_unsuccessful_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -899,7 +925,7 @@ CREATE TRIGGER monitor_unsuccessful_trigger AFTER INSERT ON public.monitor_histo
 
 
 --
--- TOC entry 4787 (class 2620 OID 16567)
+-- TOC entry 4791 (class 2620 OID 16567)
 -- Name: servers_list notify_on_unhealthy_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -907,7 +933,7 @@ CREATE TRIGGER notify_on_unhealthy_status_trigger AFTER UPDATE ON public.servers
 
 
 --
--- TOC entry 4788 (class 2620 OID 16569)
+-- TOC entry 4792 (class 2620 OID 16569)
 -- Name: servers_list server_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -915,7 +941,7 @@ CREATE TRIGGER server_status_trigger AFTER UPDATE ON public.servers_list FOR EAC
 
 
 --
--- TOC entry 4785 (class 2606 OID 16538)
+-- TOC entry 4789 (class 2606 OID 16538)
 -- Name: monitor_history monitor_history_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -924,7 +950,7 @@ ALTER TABLE ONLY public.monitor_history
 
 
 --
--- TOC entry 4784 (class 2606 OID 16468)
+-- TOC entry 4788 (class 2606 OID 16468)
 -- Name: servers_list servers_list_protocol_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -932,7 +958,7 @@ ALTER TABLE ONLY public.servers_list
     ADD CONSTRAINT servers_list_protocol_id_fkey FOREIGN KEY (protocol_id) REFERENCES public.protocols_list(protocol_id) ON DELETE CASCADE;
 
 
--- Completed on 2025-02-15 21:17:20
+-- Completed on 2025-02-15 23:22:20
 
 --
 -- PostgreSQL database dump complete
