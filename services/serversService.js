@@ -19,15 +19,22 @@ const getServersList = async () => {
 const addNewSerever = async (serverDetails) => {
   const { server_name, port, protocol_name, username, password } =
     serverDetails;
-  const encryptedPassword = encryptPassword(password);
+  let result;
   const protocol_id = await getProtocolIdByName(protocol_name);
-
-  const result = await executeFunction(true, "add_server_to_list", [
+  if (password) {
+    const encryptedPassword = encryptPassword(password);
+    result = await executeFunction(true, "add_server_to_list", [
+      server_name,
+      port,
+      protocol_id,
+      username,
+      encryptedPassword,
+    ]);
+  }
+  result = await executeFunction(true, "add_server_to_list", [
     server_name,
     port,
     protocol_id,
-    username,
-    encryptedPassword,
   ]);
   if (result.error) {
     if (result.error.code == "23505") {
