@@ -29,4 +29,16 @@ const getIsServerHealthy = async (serverId, timestamp) => {
   return result.result.rows[0];
 };
 
-module.exports = { getExistServerHistory, getIsServerHealthy };
+const addMonitoryLogByServerId = async (serverId, status) => {
+  let params = [serverId];
+  if (status) {
+    params.push(status);
+  }
+  await executeFunction(false, "add_monitor_log_to_history", params);
+};
+
+module.exports = {
+  getExistServerHistory,
+  getIsServerHealthy,
+  addMonitoryLogByServerId,
+};
