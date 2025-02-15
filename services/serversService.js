@@ -1,13 +1,13 @@
 const { executeFunction } = require("../db/db_functions");
 const { encryptPassword, decryptPassword } = require("../utils/encryptions");
-
+const parseUrl = require("../utils/parseUrl");
 const getServersList = async () => {
-  const result = await executeFunction(true, "get_all_servers_list");
+  const response = await executeFunction(true, "get_all_servers_list");
 
-  if (result.error) {
-    throw result.error;
+  if (response.error) {
+    throw response.error;
   }
-  const servers = result.result.rows;
+  const servers = response.result.rows;
   for (const server of servers) {
     if (server.password) {
       server.password = decryptPassword(server.password);
@@ -17,14 +17,13 @@ const getServersList = async () => {
 };
 
 const addNewSerever = async (serverDetails) => {
-  const { server_name, server_url, port, protocol_name, username, password } =
-    serverDetails;
-
-  let values = [server_name, server_url, port];
-  const protocol_id = await getProtocolIdByName(protocol_name);
+  const { server_url, server_name, username, password } = serverDetails;
+  const { protocol_name, port } = parseUrl(server_url);
+  let values = [server_name.trim(), server_url.trim(), port];
+  const protocol_id = await getProtocolIdByName(protocol_name.trim());
   values.push(protocol_id);
   if (password) {
-    const encryptedPassword = encryptPassword(password);
+    const encryptedPassword = encryptPassword(password.trim());
     values.push(username);
     values.push(encryptedPassword);
   }
@@ -36,7 +35,7 @@ const addNewSerever = async (serverDetails) => {
         message: `the server with name ${server_name} is already exist in the system`,
       };
     }
-    throw { status: 400, message: result.error };
+    throw { status: 400, message: response.error };
   }
   if (response.result) {
     return response.result.rows[0].add_server_to_list;
@@ -44,13 +43,19 @@ const addNewSerever = async (serverDetails) => {
 };
 
 const udpateExistSerever = async (serverId, serverDetails) => {
-  const { server_name, server_url = null, port, protocol_name } = serverDetails;
+  const { server_url, server_name, username, password } = serverDetails;
+  const { protocol_name, port } = parseUrl(server_url);
 
   let response;
   let values = [serverId, server_name, server_url, port];
   if (protocol_name) {
     const protocol_id = await getProtocolIdByName(protocol_name);
     values.push(protocol_id);
+  }
+  if (password) {
+    const encryptedPassword = encryptPassword(password);
+    values.push(username);
+    values.push(encryptedPassword);
   }
 
   response = await executeFunction(true, "update_server", values);
@@ -73,27 +78,28 @@ const udpateExistSerever = async (serverId, serverDetails) => {
 };
 
 const deleteExistSerever = async (serverId) => {
-  const result = await executeFunction(false, "delete_server_by_id", [
+  const response = await executeFunction(false, "delete_server_by_id", [
     serverId,
   ]);
-  if (result.error) {
-    if ((result.error.code = "P0002")) {
-      throw { status: 404, message: result.error.message };
+  if (response.error) {
+    if ((response.error.code = "P0002")) {
+      throw { status: 404, message: response.error.message };
     }
-    throw { status: 500, message: result.error.message };
+    throw { status: 500, message: response.error.message };
   }
 };
 
 const getExistSerever = async (serverId) => {
-  const result = await executeFunction(true, "get_server_by_id", [serverId]);
-  if (result.error) {
-    if ((result.error.code = "P0002")) {
-      throw { status: 404, message: result.error.message };
+  const response = await executeFunction(true, "get_server_by_id", [serverId]);
+  if (response.error) {
+    if ((response.error.code = "P0002")) {
+      throw { status: 404, message: response.error.message };
     }
-    throw { status: 500, message: result.error.message };
+    throw { status: 500, message: response.error.message };
   }
-  let server = result.result.rows[0];
-  server.password = decryptPassword(server.password);
+  let server = response.result.rows[0];
+  if(server.password)
+  {server.password = decryptPassword(server.password);}
   return server;
 };
 
@@ -105,7 +111,7 @@ const getProtocolIdByName = async (protocolName) => {
     if (response.result) {
       return response.result.rows[0].result;
     } else {
-      throw result.error; // No protocol found
+      throw response.error; // No protocol found
     }
   } catch (error) {
     console.error("Error fetching protocol id:", error);
