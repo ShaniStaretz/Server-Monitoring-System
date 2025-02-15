@@ -80,6 +80,7 @@ this will launch the Node.js server on http://localhost:3000.
     * **Get all servers**:
         Endpoint: GET /servers
         Description: Retrieves a list of all servers along with their current status.
+      
         Example:
          ```
           curl -X GET http://localhost:5000/api/servers
@@ -87,6 +88,7 @@ this will launch the Node.js server on http://localhost:3000.
     * **Get server by ID:**
         Endpoint: GET /servers/:serverId
         Description: Retrieves the all details of a specific server and it's 10 first monitory log history by its ID.
+      
         Example:
          ```
           curl -X GET http://localhost:5000/api/servers/1
@@ -95,6 +97,7 @@ this will launch the Node.js server on http://localhost:3000.
     * **Get server health history:**
         Endpoint: GET /history/:serverId
         Description: Returns all the server's monitorying logs by its ID.
+      
         Example:
          ```
           curl -X GET http://localhost:5000/api/history/1
@@ -111,7 +114,8 @@ this will launch the Node.js server on http://localhost:3000.
             Endpoint: POST /servers/
             Description: Add new server for monitor
             * Request Body:
-                The request body should be a JSON object that includes the necessary server information: server_name,port,protocol_name,username, password
+                The request body should be a JSON object that includes the necessary server information: server_name,port,protocol_name,username, password.
+              
                 Body Example:
                 ```
                     {
@@ -122,7 +126,8 @@ this will launch the Node.js server on http://localhost:3000.
                         "password":"rNrKYTX9g7z3RgJRmxWuGHbeu"
                     }
                 ```
-                ** When username, password are optional fields
+                ** When username, password are optional fields.
+              
                 Example:
                  ```
                    curl -X POST -H "Content-Type: application/json" \
@@ -137,7 +142,8 @@ this will launch the Node.js server on http://localhost:3000.
         * URL Parameters:
             *serverId (path parameter) – The unique identifier of the server whose health status history you wish to update.
         * Request Body:
-            The request body should be a JSON object that can include all the server's information
+            The request body should be a JSON object that can include all the server's information.
+          
             Body Example:
             ```
             {
@@ -147,7 +153,8 @@ this will launch the Node.js server on http://localhost:3000.
                 "protocol_name": "SSH"
             }
             ```
-            ** When username, password are optional fields
+            ** When username, password are optional fields.
+          
           Example:
                  ```
                    curl -X PUT -H "Content-Type: application/json" \
@@ -158,6 +165,7 @@ this will launch the Node.js server on http://localhost:3000.
    * **delete server by ID:**
        Endpoint: DELETE /servers/:serverId
        Description: Delete an exist server from the system, including its records from the monitory history.
+     
        Example:
                  ```
                    curl -X DELETE  http://localhost:5000/servers/1
@@ -166,6 +174,7 @@ this will launch the Node.js server on http://localhost:3000.
 * **Test Monitorying System**:
     Endpoint: GET /
     Description: Verify the server is up and running.
+  
     Example:
                  ```
                    curl -X GET http://localhost:5000/
@@ -173,19 +182,19 @@ this will launch the Node.js server on http://localhost:3000.
 
 ## Triggers & Notifications
 The system uses PostgreSQL triggers to update server statuses.
-* update current status of the server to be 'Healthy' if last 5 monitory logs are 'Success'
+* update current status of the server to be 'Healthy' if last 5 monitory logs are 'Success'.
 * update current status of the server to be 'Unhealthy' if last 3 monitory logs are 'Failed'
 * if current status of the server is 'Unhealthy' the system will send notification alerts accordingly.
 
 Ensure your PostgreSQL database is set up with all necessary functions, triggers, and tables.
 
 ## Limitations:
-* Protocol name needs to be one if the following options: HTTP, HTTPS, FTP, SSH
+* Protocol name needs to be one if the following options: HTTP, HTTPS, FTP, SSH.
 * server name needs to include the domain and the Top-Level Domain (TLD):
     Example:www.example.com, httpbin.org
-* no 2 servers with the same server name
+* no 2 servers with the same server name.
   
 ## Troubleshooting
 * "Server not found" error: Verify your PostgreSQL database connection settings in the .env file.
-* Email notifications not working: Make sure your SMTP credentials are valid and that your SMTP service supports external connections.
+* Email notifications not working: Make sure your SMTP credentials are valid and that your SMTP provider supports external connections.
 * Trigger or function creation errors: Ensure that the functions and triggers have been properly created in your PostgreSQL database.
