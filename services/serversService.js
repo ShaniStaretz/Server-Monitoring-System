@@ -17,27 +17,20 @@ const getServersList = async () => {
 };
 
 const addNewSerever = async (serverDetails) => {
-  const { server_name, port, protocol_name, username, password } =
+  const { server_name, server_url, port, protocol_name, username, password } =
     serverDetails;
-  let result;
+
+  let values = [server_name, server_url, port];
   const protocol_id = await getProtocolIdByName(protocol_name);
+  values.push(protocol_id);
   if (password) {
     const encryptedPassword = encryptPassword(password);
-    result = await executeFunction(true, "add_server_to_list", [
-      server_name,
-      port,
-      protocol_id,
-      username,
-      encryptedPassword,
-    ]);
+    values.push(username);
+    values.push(encryptedPassword);
   }
-  result = await executeFunction(true, "add_server_to_list", [
-    server_name,
-    port,
-    protocol_id,
-  ]);
-  if (result.error) {
-    if (result.error.code == "23505") {
+  const response = await executeFunction(true, "add_server_to_list", values);
+  if (response.error) {
+    if (response.error.code == "23505") {
       throw {
         status: 400,
         message: `the server with name ${server_name} is already exist in the system`,
@@ -45,8 +38,8 @@ const addNewSerever = async (serverDetails) => {
     }
     throw { status: 400, message: result.error };
   }
-  if (result.result) {
-    return result.result.rows[0].add_server_to_list;
+  if (response.result) {
+    return response.result.rows[0].add_server_to_list;
   }
 };
 
@@ -106,11 +99,11 @@ const getExistSerever = async (serverId) => {
 
 const getProtocolIdByName = async (protocolName) => {
   try {
-    const result = await executeFunction(true, "get_protocol_id_by_name", [
+    const response = await executeFunction(true, "get_protocol_id_by_name", [
       protocolName,
     ]);
-    if (result.result) {
-      return result.result.rows[0].result;
+    if (response.result) {
+      return response.result.rows[0].result;
     } else {
       throw result.error; // No protocol found
     }
