@@ -142,12 +142,11 @@ The system uses PostgreSQL triggers to update server statuses.
 Ensure your PostgreSQL database is set up with all necessary functions, triggers, and tables.
 
 ## Limitations:
-*Protocol name needs to be one if the following options: HTTP, HTTPS, FTP, SSH
+* Protocol name needs to be one if the following options: HTTP, HTTPS, FTP, SSH
 * server name needs to include the domain and the Top-Level Domain (TLD):
-Example:https://www.example.com
-
+    Example:www.example.com, httpbin.org
 * no 2 servers with the same server name
-* 
+  
 ## Troubleshooting
 * "Server not found" error: Verify your PostgreSQL database connection settings in the .env file.
 * Email notifications not working: Make sure your SMTP credentials are valid and that your SMTP service supports external connections.
