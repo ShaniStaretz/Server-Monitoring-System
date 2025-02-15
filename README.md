@@ -80,21 +80,35 @@ this will launch the Node.js server on http://localhost:3000.
     * **Get all servers**:
         Endpoint: GET /servers
         Description: Retrieves a list of all servers along with their current status.
+        Example:
+         ```
+          curl -X GET http://localhost:5000/api/servers
+         ```
     * **Get server by ID:**
         Endpoint: GET /servers/:serverId
         Description: Retrieves the all details of a specific server and it's 10 first monitory log history by its ID.
+        Example:
+         ```
+          curl -X GET http://localhost:5000/api/servers/1
+         ```
 
     * **Get server health history:**
         Endpoint: GET /history/:serverId
         Description: Returns all the server's monitorying logs by its ID.
+        Example:
+         ```
+          curl -X GET http://localhost:5000/api/history/1
+         ```
+         
     * **Get if  a server was Healthy by given TimeStamp**:
         Endpoint GET history/health-status/:serverId? timestamp=
         Description: Returns True and in the giving timestamp the server was healthy, else return False.
         * URL Parameters:
             *serverId (path parameter) – The unique identifier of the server whose health status history you wish to retrieve.
             * timestamp (query parameter) – The timestamp to fetch the health status from the history. It should be in the format YYYY-MM-DD HH:MM:SS.
+              
         * **Add new server:**
-            Endpoint: POST /server/
+            Endpoint: POST /servers/
             Description: Add new server for monitor
             * Request Body:
                 The request body should be a JSON object that includes the necessary server information: server_name,port,protocol_name,username, password
@@ -109,6 +123,13 @@ this will launch the Node.js server on http://localhost:3000.
                     }
                 ```
                 ** When username, password are optional fields
+                Example:
+                 ```
+                   curl -X POST -H "Content-Type: application/json" \
+                   -d '{ "server_name": " ftp.dlptest.com5","port": 22,"protocol_name":"ftp","username":"dlpuser","password":"rNrKYTX9g7z3RgJRmxWuGHbeu"}' \
+                   http://localhost:5000/servers/
+
+                 ```
 
     * **Update Exist server:**
       Endpoint: PUT /server/:serverId
@@ -127,13 +148,28 @@ this will launch the Node.js server on http://localhost:3000.
             }
             ```
             ** When username, password are optional fields
+          Example:
+                 ```
+                   curl -X PUT -H "Content-Type: application/json" \
+                   -d '{ "protocol_name": "SSH",port": 9090,"serverName": "Updated Server Name","currentStatus": "Unhealthy"}' \
+                   http://localhost:5000/servers/1
+                 ```
+          
    * **delete server by ID:**
        Endpoint: DELETE /servers/:serverId
        Description: Delete an exist server from the system, including its records from the monitory history.
+       Example:
+                 ```
+                   curl -X DELETE  http://localhost:5000/servers/1
+                 ```
 ## optional Endpoint usages:
 * **Test Monitorying System**:
     Endpoint: GET /
     Description: Verify the server is up and running.
+    Example:
+                 ```
+                   curl -X GET http://localhost:5000/
+                 ```
 
 ## Triggers & Notifications
 The system uses PostgreSQL triggers to update server statuses.
