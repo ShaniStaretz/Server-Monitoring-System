@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { Client } = require("ssh2");
 const ftp = require("basic-ftp");
-const { executeQuery, executeFunction } = require("../db/db_functions");
 const { addMonitoryLogByServerId } = require("../services/historyService");
 const { getServersList } = require("../services/serversService");
 // Automated Worker to Monitor Server Status
@@ -19,12 +18,14 @@ const checkServersHealth = async () => {
     let servers = await getServersList();
     for (const server of servers) {
       let isSuccess = await checkServerHealth(server);
-      if(!isSuccess){
-        console.log("[worker] will log Failed for server:",server.server_name)
-        await addMonitoryLogByServerId(server.server_id,'Failed');
-      }
-      else{
-        console.log("[worker] will log Success for server:",server.server_name)
+      if (!isSuccess) {
+        console.log("[worker] will log Failed for server:", server.server_name);
+        await addMonitoryLogByServerId(server.server_id, "Failed");
+      } else {
+        console.log(
+          "[worker] will log Success for server:",
+          server.server_name
+        );
         await addMonitoryLogByServerId(server.server_id);
       }
     }
@@ -57,17 +58,17 @@ const parseUrl = (url) => {
 };
 
 const checkServerHealth = async (server) => {
-  const { protocol_name, server_name, port } = server;
+  const { protocol_name, server_name, port, username, password } = server;
   switch (protocol_name) {
     case "HTTP":
     case "HTTPS":
       return await checkHttpConnection(protocol_name, server_name, port);
       break;
     case "SSH":
-      return await checkSshConnection(server_name, port);
+      return await checkSshConnection(server_name, port, username, password);
       break;
     case "FTP":
-      return await checkFtpConnection(server_name, port);
+      return await checkFtpConnection(server_name, port, username, password);
     default:
       break;
   }
@@ -82,25 +83,25 @@ const checkHttpConnection = async (protocol, host, port) => {
     const latency = Date.now() - start; // Calculate latency
     if (response.status === 200 && latency < 45000) {
       console.log(
-        `Connection to ${url} successful. Response Latency: ${latency}ms`
+        `[worker] Connection to ${url} successful. Response Latency: ${latency}ms`
       );
       return true;
     } else {
       console.log(
-        `Received unexpected status code: ${response.status}. Latency: ${latency}ms`
+        `[worker] Received unexpected status code: ${response.status}. Latency: ${latency}ms`
       );
       return false;
     }
   } catch (error) {
     const latency = Date.now() - start;
     console.error(
-      `Error connecting to ${url}: ${error.message}. Latency: ${latency}ms`
+      `[worker] Error connecting to ${url}: ${error.message}. Latency: ${latency}ms`
     );
     return false;
   }
 };
 
-const checkFtpConnection = async (host, port) => {
+const checkFtpConnection = async (host, port, username, password) => {
   const client = new ftp.Client();
   client.ftp.verbose = true;
   const start = Date.now(); // Start time
@@ -108,17 +109,17 @@ const checkFtpConnection = async (host, port) => {
     const response = await client.access({
       host: host,
       port: port,
-      user: process.env.FTP_USER, // Or provide your FTP user credentials
-      password: process.env.FTP_PASSWORD,
+      user: username, // Or provide your FTP user credentials
+      password: password,
     });
     const latency = Date.now() - start; // Calculate latency
     if (response && latency < 45000) {
-      console.log(`Connected to FTP server at ${host}:${port}`);
+      console.log(`[worker] Connected to FTP server at ${host}:${port}`);
       return true;
     }
   } catch (err) {
     console.error(
-      `Failed to connect to FTP server at ${host}:${port}: ${err.message}`
+      `[worker] Failed to connect to FTP server at ${host}:${port}: ${err.message}`
     );
     return false;
   } finally {
@@ -126,27 +127,27 @@ const checkFtpConnection = async (host, port) => {
   }
 };
 
-const checkSshConnection = async (host, port) => {
+const checkSshConnection = async (host, port, username, password) => {
   const connection = new Client();
   const start = Date.now(); // Start time
   try {
     await new Promise((resolve, reject) => {
       connection
         .on("ready", () => {
-          console.log(`SSH Connection to ${host}:${port} successful`);
+          console.log(`[worker] SSH Connection to ${host}:${port} successful`);
           connection.end();
         })
         .on("error", (err) => {
           console.error(
-            `Failed to connect to SSH server at ${host}:${port}: ${err.message}`
+            `[worker] Failed to connect to SSH server at ${host}:${port}: ${err.message}`
           );
           return false;
         })
         .connect({
           host: host,
           port: port,
-          username: process.env.SSH_USER, // Provide username
-          password: process.env.SSH_PASSWORD, // Provide password or use privateKey
+          username: username, // Provide username
+          password: password, // Provide password or use privateKey
         });
     });
     const latency = Date.now() - start; // Calculate latency
@@ -154,7 +155,7 @@ const checkSshConnection = async (host, port) => {
       return true;
     }
   } catch (error) {
-    console.error("cFailed to connect via SSH:", error);
+    console.error("[worker] Failed to connect via SSH:", error);
     return false;
   }
 };

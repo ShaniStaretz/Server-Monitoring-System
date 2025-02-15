@@ -13,6 +13,7 @@ const handleGetServersList = async (req, res) => {
     console.log(`found ${servers.length} servers in the system`);
     res.status(200).json(servers);
   } catch (error) {
+    console.error("Error in handleGetServersList: ",error.message)
     res
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });
@@ -26,6 +27,7 @@ const handlePostAddNewServer = async (req, res) => {
     console.log(`added new server to the system with id: ${server_id}`);
     res.status(200).json({ message: "the server was added succefully" });
   } catch (error) {
+    console.error("Error in handleGetServersList: ",error.message)
     res
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });
@@ -46,7 +48,7 @@ const handlePutUpdateExistServer = async (req, res) => {
       message: `Server with ID ${serverId} was updated successfully!`,
     });
   } catch (error) {
-    console.error("❌ Error updating server:", error);
+    console.error("Error updating server:", error.message);
     res.status(500).json({ error: error.message || "Internal Server Error" });
   }
 };
@@ -64,7 +66,7 @@ const handleDeleteExistServer = async (req, res) => {
       message: `Server with ID ${serverId} was deleted successfully!`,
     });
   } catch (error) {
-    console.error("❌ Error updating server:", error);
+    console.error("Error handleDeleteExistServer:", error.message);
     res
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });
@@ -82,7 +84,7 @@ const handleGetExistServer = async (req, res) => {
     // Respond with success message
     res.status(200).json(server);
   } catch (error) {
-    console.error("❌ Error updating server:", error);
+    console.error("Error handleGetExistServer:", error.message);
     res
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });

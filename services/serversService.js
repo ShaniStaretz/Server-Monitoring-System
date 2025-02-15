@@ -1,23 +1,36 @@
-const { executeFunction } = require("../db/db_functions"); // Import the executeFunction from your db_functions.js
+const { executeFunction } = require("../db/db_functions");
+const { encryptPassword, decryptPassword } = require("../utils/encryptions");
+
 const getServersList = async () => {
   const result = await executeFunction(true, "get_all_servers_list");
+
   if (result.error) {
     throw result.error;
   }
-  return result.result.rows;
+  const servers = result.result.rows;
+  for (const server of servers) {
+    if (server.password) {
+      server.password = decryptPassword(server.password);
+    }
+  }
+  return servers;
 };
 
 const addNewSerever = async (serverDetails) => {
-  const { server_name, port, protocol_name } = serverDetails;
-
+  const { server_name, port, protocol_name, username, password } =
+    serverDetails;
+  const encryptedPassword = encryptPassword(password);
   const protocol_id = await getProtocolIdByName(protocol_name);
+
   const result = await executeFunction(true, "add_server_to_list", [
     server_name,
     port,
     protocol_id,
+    username,
+    encryptedPassword,
   ]);
   if (result.error) {
-    if (result.error.includes("unique")) {
+    if (result.error.code == "23505") {
       throw {
         status: 400,
         message: `the server with name ${server_name} is already exist in the system`,
@@ -75,8 +88,9 @@ const getExistSerever = async (serverId) => {
     }
     throw { status: 500, message: result.error.message };
   }
-
-  return result.result.rows[0];
+  let server = result.result.rows[0];
+  server.password = decryptPassword(server.password);
+  return server;
 };
 
 const getProtocolIdByName = async (protocolName) => {
