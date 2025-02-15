@@ -25,10 +25,17 @@ const handlePostAddNewServer = async (req, res) => {
   try {
     const { server_url, server_name, username, password } = req.body;
 
-    if (!server_url || !server_url) {
+    if (!server_url || !server_name) {
       throw {
         status: 400,
         message: "invalid input, missing required parameters",
+      };
+    }
+    if (!isValidURL(server_url)) {
+      throw {
+        status: 400,
+        message:
+          "invalid url format, must at least in format: protocol://host,in protocols:HTTP, HTTPS, FTP, SSH only",
       };
     }
     const server_id = await addNewSerever(req.body);
@@ -45,10 +52,17 @@ const handlePostAddNewServer = async (req, res) => {
 // Route handler function
 const handlePutUpdateExistServer = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
-  
+
   try {
     if (!serverId) {
       throw { status: 400, message: "invalid input, missing serverId" };
+    }
+    if (req.body.server_url && !isValidURL(server_url)) {
+      throw {
+        status: 400,
+        message:
+          "invalid url format, must at least in format: protocol://host,in protocols:HTTP, HTTPS, FTP, SSH only",
+      };
     }
     // Call the updateServer function with the data
     const returned_server = await udpateExistSerever(serverId, req.body);
@@ -105,6 +119,11 @@ const handleGetExistServer = async (req, res) => {
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });
   }
+};
+
+const isValidURL = (server_url) => {
+  const regex = /^(ftp|http|https|ssh):\/\/([^:/]+)(?::(\d+))?/i;
+  return regex.test(server_url);
 };
 module.exports = {
   handleGetServersList,

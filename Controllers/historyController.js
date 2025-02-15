@@ -26,7 +26,7 @@ const handleGetExistServerHistory = async (req, res) => {
 
 const handleIsServerHealthyByTimestamp = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
-  const timestamp = req.query.timestamp;
+  const timestamp = req.query.timestamp.trim();
   try {
     if (!serverId) {
       throw { status: 400, message: "invalid input, missing serverId" };
