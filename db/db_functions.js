@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const sendEmail = require("../utils/send_mail")
 // PostgreSQL pool Pool
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -45,6 +46,17 @@ async function listenForNotifications() {
     // Handle incoming notifications
     client.on("notification", (msg) => {
       console.debug("[db] Notification received:", msg.payload);
+      // Check if the notification is about an unhealthy server
+      if (msg.payload.includes("Unhealthy")) {
+        // Parse the server ID and status from the notification payload
+        const serverId = msg.payload.split(" ")[1]; // Assuming the message is like 'Server <id> is now Unhealthy'
+        const subject = `Alert: Server ${serverId} is Unhealthy`;
+        const text = `The server with ID ${serverId} is now marked as Unhealthy.`;
+        const emailTo = "recipient@example.com";
+
+        // Send the email
+        sendEmail(subject, text, emailTo);
+      }
     });
 
     // Keep the client connection alive
@@ -116,10 +128,7 @@ async function executeQuery(query_Str, params = null) {
   } catch (err) {
     res.error = err.message;
     console.error(
-      "[db] Error connecting to db" +
-        err.message +
-        " with code:" +
-        err.code
+      "[db] Error connecting to db" + err.message + " with code:" + err.code
     );
   }
   pool.removeAllListeners();
