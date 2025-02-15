@@ -5,7 +5,7 @@ const {
   deleteExistSerever,
   getExistSerever,
 } = require("../services/serversService");
-const { REGEX_PARTTERNS } =require( "../utils/REGEX_PATTERNS");
+const { REGEX_PARTTERNS } = require("../utils/REGEX_PATTERNS");
 
 // Route handler function
 const handleGetServersList = async (req, res) => {
@@ -53,12 +53,13 @@ const handlePostAddNewServer = async (req, res) => {
 // Route handler function
 const handlePutUpdateExistServer = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
-
+  let { server_url } = req.body;
+  server_url = server_url.trim();
   try {
     if (!serverId) {
       throw { status: 400, message: "invalid input, missing serverId" };
     }
-    if (req.body.server_url && !isValidURL(server_url)) {
+    if (server_url && !isValidURL(server_url)) {
       throw {
         status: 400,
         message:
