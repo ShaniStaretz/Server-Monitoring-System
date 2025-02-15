@@ -8,6 +8,9 @@ const handleGetExistServerHistory = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
 
   try {
+    if (!serverId) {
+      throw { status: 400, message: "invalid input, missing serverId" };
+    }
     const history = await getExistServerHistory(serverId);
     console.info(
       `[history] found ${history.length} history records for server with id ${serverId} in the system`
@@ -25,17 +28,20 @@ const handleIsServerHealthyByTimestamp = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
   const timestamp = req.query.timestamp;
   try {
-    // Make sure the timestamp is a valid Date object or in ISO 8601 string format
-    const validTimestamp = new Date(timestamp); // Convert string to Date if it's not already
-
-    // If timestamp is invalid, throw an error
-    if (isNaN(validTimestamp.getTime())) {
-      throw { status: 400, message: "Invalid timestamp format." };
+    if (!serverId) {
+      throw { status: 400, message: "invalid input, missing serverId" };
     }
-
+    if (!timestamp || !isValidDateTime(timestamp)) {
+      throw {
+        status: 400,
+        message:
+          "invalid input,timestamp must be in format YYYY-MM-DD HH:MM:SS",
+      };
+    }
+    const validTimestamp = new Date(timestamp);
     const isHealthy = await getIsServerHealthy(serverId, validTimestamp);
     console.info(
-      `[history] found server  ${
+      `[history] found server ${
         isHealthy ? "was" : "was not"
       } active on time ${timestamp}`
     );
@@ -49,6 +55,11 @@ const handleIsServerHealthyByTimestamp = async (req, res) => {
       .status(error.status || 500)
       .json({ error: error.message || "Internal Server Error" });
   }
+};
+const isValidDateTime = (timestamp) => {
+  const regex =
+    /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+  return regex.test(timestamp);
 };
 
 module.exports = {

@@ -26,7 +26,7 @@ const getIsServerHealthy = async (serverId, timestamp) => {
     throw { status: 500, message: response.error.message };
   }
 
-  return response.result.rows[0];
+  return response.result.rows[0].is_server_healthy;
 };
 
 const addMonitoryLogByServerId = async (serverId, status) => {
