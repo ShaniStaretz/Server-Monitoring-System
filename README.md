@@ -10,7 +10,8 @@ The Servers Monitoring System is designed to monitor server health, track status
 * Automated Alerts: Sends notifications when a server changes status.
 * Historical Data: Logs status updates for each server.
 * Database Integration: Uses PostgreSQL for storing server data and managing triggers.
-* The system creates the tables and trigger if their not exist in the database
+* The system creates the tables and trigger if their not exist in the database.
+* The system encrypt the server's access passowrd, if exist, before entering the database.
 
 ## Technologies Used
 * Backend: Node.js, Express
@@ -18,6 +19,7 @@ The Servers Monitoring System is designed to monitor server health, track status
 * Email Notifications: Nodemailer
 * FTP Server Connectivity: Basic-FTP library
 * Triggers and Stored Procedures: PostgreSQL functions to manage server status and logs.
+* Encryption: crypto library
 
 ## Project Setup
 ### Prerequisites
@@ -42,7 +44,7 @@ npm install
 make sure you have server and database connection ready.
 ** Please note the app does not create the PostgreSQL inner functions and procedures, only the triggers and tables
 
-4.Set up environment variables:
+4. Set up environment variables:
 ```
 PORT=your_app_port # or default value will take place =3000
 DB_HOST=localhost
@@ -69,82 +71,63 @@ this will launch the Node.js server on http://localhost:3000.
 2. **Accessing the API:**
 
     All REST API endpoints starts with /api
-* **Get all servers**:
+    * **Get all servers**:
+        Endpoint: GET /servers
+        Description: Retrieves a list of all servers along with their current status.
+    * **Get server by ID:**
+        Endpoint: GET /servers/:serverId
+        Description: Retrieves the all details of a specific server and it's 10 first monitory log history by its ID.
 
-    Endpoint: GET /servers
+    * **Get server health history:**
+        Endpoint: GET /history/:serverId
+        Description: Returns all the server's monitorying logs by its ID.
+    * **Get if  a server was Healthy by given TimeStamp**:
+        Endpoint GET history/health-status/:serverId? timestamp=
+        Description: Returns True and in the giving timestamp the server was healthy, else return False.
+        * URL Parameters:
+            *serverId (path parameter) – The unique identifier of the server whose health status history you wish to retrieve.
+            * timestamp (query parameter) – The timestamp to fetch the health status from the history. It should be in the format YYYY-MM-DD HH:MM:SS.
+        * **Add new server:**
+            Endpoint: POST /server/
+            Description: Add new server for monitor
+            * Request Body:
+                The request body should be a JSON object that includes the necessary server information: server_name,port,protocol_name,username, password
+                Body Example:
+                ```
+                    {
+                        "server_name": " ftp.dlptest.com5",
+                        "port": 22,
+                        "protocol_name":"ftp",
+                        "username":"dlpuser",
+                        "password":"rNrKYTX9g7z3RgJRmxWuGHbeu"
+                    }
+                ```
+                ** When username, password are optional fields
 
-    Description: Retrieves a list of all servers along with their current status.
-* **Get server by ID:**
-
-    Endpoint: GET /servers/:serverId
-    Description: Retrieves the all details of a specific server and it's 10 first monitory log history by its ID.
-
-* **Get server health history:**
-
-    Endpoint: GET /history/:serverId
-
-    Description: Returns all the server's monitorying logs by its ID.
-* **Get if  a server was Healthy by given TimeStamp**:
-    Endpoint GET history/health-status/:serverId? timestamp=
-
-    Description: Returns True and in the giving timestamp the server was healthy, else return False.
-    * URL Parameters:
-        *serverId (path parameter) – The unique identifier of the server whose health status history you wish to retrieve.
-        * timestamp (query parameter) – The timestamp to fetch the health status from the history. It should be in the format YYYY-MM-DD HH:MM:SS.
-
-* **Add new server:**
-    Endpoint: POST /server/
-
-    Description: Add new server for monitor
-    * URL Parameters:
-        None – This endpoint does not expect any URL parameters.
-    * Request Body:
-
-    The request body should be a JSON object that includes the necessary server information: server_name,port,protocol_name,username, password
-    Body Example:
-    ```
-    {
-        "server_name": " ftp.dlptest.com5",
-        "port": 22,
-        "protocol_name":"ftp",
-        "username":"dlpuser",
-        "password":"rNrKYTX9g7z3RgJRmxWuGHbeu"
-    }
-    ```
-    ** When username, password are optional fields
-
-* **Update Exist server:**
-    Endpoint: PUT /server/:serverId
-
-    Description: Update an exist server for monitor
-    * URL Parameters:
-        *serverId (path parameter) – The unique identifier of the server whose health status history you wish to update.
-    * Request Body:
-
-    The request body should be a JSON object that can include all the server's information
-    Body Example:
-    ```
-        {
-            "currentStatus": "Unhealthy",
-            "serverName": "Updated Server Name",
-            "port": 9090,
-            "protocol_name": "SSH"
-        }
-    ```
-    ** When username, password are optional fields
-  * **delete server by ID:**
-
-    Endpoint: DELETE /servers/:serverId
-
-    Description: Delete an exist server from the system, including its records from the monitory history.
-
+    * **Update Exist server:**
+      Endpoint: PUT /server/:serverId
+        Description: Update an exist server for monitor
+        * URL Parameters:
+            *serverId (path parameter) – The unique identifier of the server whose health status history you wish to update.
+        * Request Body:
+            The request body should be a JSON object that can include all the server's information
+            Body Example:
+            ```
+            {
+                "currentStatus": "Unhealthy",
+                "serverName": "Updated Server Name",
+                "port": 9090,
+                "protocol_name": "SSH"
+            }
+            ```
+            ** When username, password are optional fields
+   * **delete server by ID:**
+       Endpoint: DELETE /servers/:serverId
+       Description: Delete an exist server from the system, including its records from the monitory history.
 ## optional Endpoint usages:
 * **Test Monitorying System**:
     Endpoint: GET /
-
     Description: Verify the server is up and running.
-
-  
 
 ## Triggers & Notifications
 The system uses PostgreSQL triggers to update server statuses.
