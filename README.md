@@ -119,7 +119,8 @@ this will launch the Node.js server on http://localhost:3000.
                 Body Example:
                 ```
                     {
-                        "server_name": " ftp.dlptest.com5",
+                        "server_name": "ftp.dlptest.com5",
+                        "server_url":"ftp.dlptest.com",
                         "port": 22,
                         "protocol_name":"ftp",
                         "username":"dlpuser",

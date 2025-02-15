@@ -5,7 +5,7 @@
 -- Dumped from database version 16.6
 -- Dumped by pg_dump version 16.6
 
--- Started on 2025-02-15 14:22:38
+-- Started on 2025-02-15 21:17:20
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 244 (class 1255 OID 16523)
+-- TOC entry 241 (class 1255 OID 16523)
 -- Name: add_monitor_log_to_history(integer, text); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -37,19 +37,19 @@ $$;
 ALTER PROCEDURE public.add_monitor_log_to_history(IN p_server_id integer, IN p_status text) OWNER TO postgres;
 
 --
--- TOC entry 237 (class 1255 OID 16509)
--- Name: add_server_to_list(text, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- TOC entry 247 (class 1255 OID 16574)
+-- Name: add_server_to_list(text, text, integer, integer, text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.add_server_to_list(in_server_name text, in_port integer, in_protocol_id integer) RETURNS integer
+CREATE FUNCTION public.add_server_to_list(in_server_name text, in_server_url text, in_port integer, in_protocol_id integer, in_username text, in_password text) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
     new_server_id INT;
 BEGIN
     -- Insert the new server into the servers_list table and return the server_id
-    INSERT INTO servers_list (server_name, port, protocol_id, current_status)
-    VALUES (in_server_name, in_port, in_protocol_id, 'Healthy')  -- Default to 'Healthy'
+    INSERT INTO servers_list (server_name, server_url,port, protocol_id, current_status,username,password)
+    VALUES (in_server_name,in_server_url, in_port, in_protocol_id, 'Healthy',in_username,in_password)  -- Default to 'Healthy'
     RETURNING server_id INTO new_server_id;
     
     -- Return the new server_id
@@ -58,10 +58,10 @@ END;
 $$;
 
 
-ALTER FUNCTION public.add_server_to_list(in_server_name text, in_port integer, in_protocol_id integer) OWNER TO postgres;
+ALTER FUNCTION public.add_server_to_list(in_server_name text, in_server_url text, in_port integer, in_protocol_id integer, in_username text, in_password text) OWNER TO postgres;
 
 --
--- TOC entry 245 (class 1255 OID 16407)
+-- TOC entry 242 (class 1255 OID 16407)
 -- Name: create_monitor_history_table(); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -86,7 +86,80 @@ $$;
 ALTER PROCEDURE public.create_monitor_history_table() OWNER TO postgres;
 
 --
--- TOC entry 241 (class 1255 OID 16518)
+-- TOC entry 243 (class 1255 OID 16564)
+-- Name: create_monitor_success_trigger(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_monitor_success_trigger() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'monitor_success_trigger'
+    ) THEN
+        EXECUTE '
+            CREATE TRIGGER monitor_success_trigger 
+            AFTER INSERT ON monitor_history
+            FOR EACH ROW 
+            EXECUTE FUNCTION update_server_status_on_success()
+        ';
+    END IF;
+END $$;
+
+
+ALTER FUNCTION public.create_monitor_success_trigger() OWNER TO postgres;
+
+--
+-- TOC entry 244 (class 1255 OID 16565)
+-- Name: create_monitor_unsuccessful_trigger(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_monitor_unsuccessful_trigger() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'monitor_unsuccessful_trigger'
+    ) THEN
+        EXECUTE '
+            CREATE TRIGGER monitor_unsuccessful_trigger 
+            AFTER INSERT ON monitor_history
+            FOR EACH ROW 
+            EXECUTE FUNCTION update_server_status_on_unsuccessful()
+        ';
+    END IF;
+END $$;
+
+
+ALTER FUNCTION public.create_monitor_unsuccessful_trigger() OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1255 OID 16566)
+-- Name: create_notify_on_unhealthy_status_trigger(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_notify_on_unhealthy_status_trigger() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'notify_on_unhealthy_status_trigger'
+    ) THEN
+        EXECUTE '
+            CREATE TRIGGER notify_on_unhealthy_status_trigger
+            AFTER UPDATE ON servers_list
+            FOR EACH ROW 
+            WHEN (NEW.current_status = ''Unhealthy'')
+            EXECUTE FUNCTION notify_on_unhealthy_status()
+        ';
+    END IF;
+END $$;
+
+
+ALTER FUNCTION public.create_notify_on_unhealthy_status_trigger() OWNER TO postgres;
+
+--
+-- TOC entry 238 (class 1255 OID 16518)
 -- Name: create_protocols_list_table(); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -129,6 +202,7 @@ BEGIN
             server_id SERIAL PRIMARY KEY,
             current_status TEXT NOT NULL DEFAULT 'Healthy' CHECK (current_status IN ('Healthy', 'Unhealthy')), 
             server_name TEXT NOT NULL UNIQUE,
+			server_url TEXT NOT NULL,
             port INTEGER NOT NULL,
             protocol_id INTEGER NOT NULL REFERENCES protocols_list(protocol_id) ON DELETE CASCADE,
 			username TEXT NULL DEFAULT NULL,
@@ -187,17 +261,17 @@ $$;
 ALTER PROCEDURE public.delete_server_by_name(IN p_server_name text) OWNER TO postgres;
 
 --
--- TOC entry 239 (class 1255 OID 16508)
+-- TOC entry 246 (class 1255 OID 16575)
 -- Name: get_all_servers_list(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.get_all_servers_list() RETURNS TABLE(server_id integer, server_name text, port integer, protocol_name text, current_status text)
+CREATE FUNCTION public.get_all_servers_list() RETURNS TABLE(server_id integer, server_name text, server_url text, port integer, protocol_name text, current_status text, username text, password text)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     -- Perform the JOIN between servers_list and protocol_list to get protocol_name
     RETURN QUERY
-    SELECT s.server_id, s.server_name, s.port, p.protocol_name,s.current_status
+    SELECT s.server_id, s.server_name,s.server_url,s.port, p.protocol_name,s.current_status,s.username,s.password
     FROM servers_list s
     JOIN protocols_list p
     ON s.protocol_id = p.protocol_id
@@ -209,7 +283,7 @@ $$;
 ALTER FUNCTION public.get_all_servers_list() OWNER TO postgres;
 
 --
--- TOC entry 243 (class 1255 OID 16522)
+-- TOC entry 240 (class 1255 OID 16522)
 -- Name: get_monitor_history_by_server(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -250,11 +324,11 @@ $$;
 ALTER FUNCTION public.get_protocol_id_by_name(in_protocol_name text) OWNER TO postgres;
 
 --
--- TOC entry 242 (class 1255 OID 16520)
+-- TOC entry 248 (class 1255 OID 16576)
 -- Name: get_server_by_id(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.get_server_by_id(p_server_id integer) RETURNS TABLE(id integer, server_name text, port integer, protocol_name text, last_updated timestamp without time zone, current_status text, history jsonb)
+CREATE FUNCTION public.get_server_by_id(p_server_id integer) RETURNS TABLE(id integer, server_name text, server_url text, port integer, protocol_name text, last_updated timestamp without time zone, current_status text, username text, password text, history jsonb)
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -269,10 +343,13 @@ BEGIN
     SELECT 
         s.server_id AS id,  
         s.server_name, 
+		s.server_url,
         s.port, 
         p.protocol_name,
         s.last_updated,
         s.current_status,
+		s.username,
+		s.password,
         (
             SELECT jsonb_agg(
                 jsonb_build_object(
@@ -327,7 +404,7 @@ $$;
 ALTER FUNCTION public.is_server_healthy(p_server_id integer, p_timestamp timestamp without time zone) OWNER TO postgres;
 
 --
--- TOC entry 246 (class 1255 OID 16551)
+-- TOC entry 239 (class 1255 OID 16551)
 -- Name: notify_on_unhealthy_status(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -348,23 +425,30 @@ CREATE FUNCTION public.notify_on_unhealthy_status() RETURNS trigger
 ALTER FUNCTION public.notify_on_unhealthy_status() OWNER TO postgres;
 
 --
--- TOC entry 238 (class 1255 OID 16510)
--- Name: update_server(integer, text, text, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- TOC entry 249 (class 1255 OID 16581)
+-- Name: update_server(integer, text, text, integer, integer, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.update_server(p_server_id integer, p_current_status text DEFAULT NULL::text, p_server_name text DEFAULT NULL::text, p_port integer DEFAULT NULL::integer, p_protocol_id integer DEFAULT NULL::integer) RETURNS integer
+CREATE FUNCTION public.update_server(p_server_id integer, p_server_name text DEFAULT NULL::text, p_server_url text DEFAULT NULL::text, p_port integer DEFAULT NULL::integer, p_protocol_id integer DEFAULT NULL::integer, p_current_status text DEFAULT NULL::text) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
     updated_server_id INTEGER;
 BEGIN
+	 -- Check if server_id exists
+    IF NOT EXISTS (SELECT 1 FROM servers_list WHERE server_id = p_server_id) THEN
+        RAISE EXCEPTION 'Server with ID % does not exist.', p_server_id
+        USING ERRCODE = 'P0002';  -- Custom error code
+    END IF;
     -- Update the server and capture the updated server_id
     UPDATE servers_list
     SET 
-        current_status = COALESCE(p_current_status, current_status),
+     
         server_name = COALESCE(p_server_name, server_name),
-        port = COALESCE(p_port, port),
-        protocol_id = COALESCE(p_protocol_id, protocol_id)
+        server_url=COALESCE(p_server_url, server_url),
+		port = COALESCE(p_port, port),
+        protocol_id = COALESCE(p_protocol_id, protocol_id),
+		current_status = COALESCE(p_current_status, current_status)
     WHERE server_id = p_server_id
     RETURNING server_id INTO updated_server_id;
 
@@ -374,10 +458,10 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_server(p_server_id integer, p_current_status text, p_server_name text, p_port integer, p_protocol_id integer) OWNER TO postgres;
+ALTER FUNCTION public.update_server(p_server_id integer, p_server_name text, p_server_url text, p_port integer, p_protocol_id integer, p_current_status text) OWNER TO postgres;
 
 --
--- TOC entry 240 (class 1255 OID 16547)
+-- TOC entry 237 (class 1255 OID 16547)
 -- Name: update_server_status_on_success(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -413,7 +497,7 @@ CREATE FUNCTION public.update_server_status_on_success() RETURNS trigger
 ALTER FUNCTION public.update_server_status_on_success() OWNER TO postgres;
 
 --
--- TOC entry 247 (class 1255 OID 16544)
+-- TOC entry 250 (class 1255 OID 16544)
 -- Name: update_server_status_on_unsuccessful(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -484,7 +568,7 @@ CREATE SEQUENCE public.monitor_history_monitor_id_seq
 ALTER SEQUENCE public.monitor_history_monitor_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4942 (class 0 OID 0)
+-- TOC entry 4946 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: monitor_history_monitor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -523,7 +607,7 @@ CREATE SEQUENCE public.protocol_list_protocol_id_seq
 ALTER SEQUENCE public.protocol_list_protocol_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4943 (class 0 OID 0)
+-- TOC entry 4947 (class 0 OID 0)
 -- Dependencies: 215
 -- Name: protocol_list_protocol_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -545,6 +629,7 @@ CREATE TABLE public.servers_list (
     username text,
     password text,
     last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    server_url text NOT NULL,
     CONSTRAINT servers_list_current_status_check CHECK ((current_status = ANY (ARRAY['Healthy'::text, 'Unhealthy'::text])))
 );
 
@@ -568,7 +653,7 @@ CREATE SEQUENCE public.servers_list_server_id_seq
 ALTER SEQUENCE public.servers_list_server_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4944 (class 0 OID 0)
+-- TOC entry 4948 (class 0 OID 0)
 -- Dependencies: 217
 -- Name: servers_list_server_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -577,7 +662,7 @@ ALTER SEQUENCE public.servers_list_server_id_seq OWNED BY public.servers_list.se
 
 
 --
--- TOC entry 4765 (class 2604 OID 16530)
+-- TOC entry 4768 (class 2604 OID 16530)
 -- Name: monitor_history monitor_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -585,7 +670,7 @@ ALTER TABLE ONLY public.monitor_history ALTER COLUMN monitor_id SET DEFAULT next
 
 
 --
--- TOC entry 4761 (class 2604 OID 16434)
+-- TOC entry 4764 (class 2604 OID 16434)
 -- Name: protocols_list protocol_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -593,7 +678,7 @@ ALTER TABLE ONLY public.protocols_list ALTER COLUMN protocol_id SET DEFAULT next
 
 
 --
--- TOC entry 4762 (class 2604 OID 16458)
+-- TOC entry 4765 (class 2604 OID 16458)
 -- Name: servers_list server_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -601,114 +686,77 @@ ALTER TABLE ONLY public.servers_list ALTER COLUMN server_id SET DEFAULT nextval(
 
 
 --
--- TOC entry 4936 (class 0 OID 16527)
+-- TOC entry 4940 (class 0 OID 16527)
 -- Dependencies: 220
 -- Data for Name: monitor_history; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.monitor_history (monitor_id, server_id, "timestamp", status) FROM stdin;
-1	3	2025-02-15 11:14:29.281927	Failed
-2	3	2025-02-15 11:14:31.994527	Failed
-3	3	2025-02-15 11:14:33.571488	Failed
-4	3	2025-02-15 11:17:04.58792	Failed
-5	3	2025-02-15 11:19:37.983996	Failed
-6	3	2025-02-15 11:28:33.111995	Success
-7	3	2025-02-15 11:28:35.07744	Success
-8	3	2025-02-15 11:28:36.30459	Success
-9	3	2025-02-15 11:28:45.080071	Success
-10	3	2025-02-15 11:28:46.362883	Success
-11	3	2025-02-15 11:29:03.198684	Failed
-12	3	2025-02-15 11:29:04.800933	Failed
-13	3	2025-02-15 11:29:06.22392	Failed
-14	3	2025-02-15 11:39:33.019686	Failed
-15	3	2025-02-15 11:39:34.544278	Failed
-16	3	2025-02-15 11:39:35.936239	Failed
-17	3	2025-02-15 11:44:25.597454	Failed
-18	3	2025-02-15 12:44:48.769794	Failed
-19	3	2025-02-15 13:16:42.221733	Failed
-20	3	2025-02-15 13:16:48.235088	Failed
-23	3	2025-02-15 13:21:38.299382	Success
-24	3	2025-02-15 13:21:44.299836	Success
-25	3	2025-02-15 13:21:50.298881	Success
-26	3	2025-02-15 13:21:56.300178	Success
-27	3	2025-02-15 13:22:02.306517	Success
-28	3	2025-02-15 13:22:08.311985	Success
-29	3	2025-02-15 13:22:14.312344	Success
-30	3	2025-02-15 13:22:20.326477	Success
-31	3	2025-02-15 13:22:26.328066	Success
-32	3	2025-02-15 13:22:32.341549	Success
-33	3	2025-02-15 13:22:38.354795	Success
-34	3	2025-02-15 13:22:44.369238	Success
-35	3	2025-02-15 13:22:50.380354	Success
-36	3	2025-02-15 13:22:56.388536	Success
-37	3	2025-02-15 13:23:05.672915	Success
-38	3	2025-02-15 13:23:11.687609	Success
-39	3	2025-02-15 13:23:17.687946	Success
-40	3	2025-02-15 13:23:23.701846	Success
-41	3	2025-02-15 13:23:29.70506	Success
-42	3	2025-02-15 13:23:35.717374	Success
-43	3	2025-02-15 13:23:41.71772	Success
-44	3	2025-02-15 13:23:47.717539	Success
-45	3	2025-02-15 14:08:22.315038	Failed
 46	7	2025-02-15 14:08:22.327452	Failed
 47	8	2025-02-15 14:08:22.330529	Failed
-48	3	2025-02-15 14:08:28.318393	Failed
 49	7	2025-02-15 14:08:28.321811	Failed
 50	8	2025-02-15 14:08:28.324642	Failed
-51	3	2025-02-15 14:08:34.326418	Failed
 52	7	2025-02-15 14:08:34.337752	Failed
 53	8	2025-02-15 14:08:34.342389	Failed
-54	3	2025-02-15 14:08:40.329336	Failed
 55	7	2025-02-15 14:08:40.339785	Failed
 56	8	2025-02-15 14:08:40.342661	Failed
-57	3	2025-02-15 14:08:46.337883	Failed
 58	7	2025-02-15 14:08:46.341188	Failed
 59	8	2025-02-15 14:08:46.34422	Failed
-60	3	2025-02-15 14:08:52.346385	Failed
 61	7	2025-02-15 14:08:52.349615	Failed
 62	8	2025-02-15 14:08:52.353205	Failed
-63	3	2025-02-15 14:13:57.591157	Failed
 64	7	2025-02-15 14:13:57.603368	Failed
 65	8	2025-02-15 14:13:57.607359	Failed
-66	3	2025-02-15 14:14:57.602362	Failed
 67	7	2025-02-15 14:14:57.607043	Failed
 68	8	2025-02-15 14:14:57.610757	Failed
-69	3	2025-02-15 14:15:57.502945	Failed
 70	7	2025-02-15 14:15:57.509495	Failed
 71	8	2025-02-15 14:15:57.514327	Failed
 72	9	2025-02-15 14:16:18.673007	Failed
-73	3	2025-02-15 14:16:57.599274	Failed
 74	7	2025-02-15 14:16:57.603808	Failed
 75	8	2025-02-15 14:16:57.607395	Failed
 76	9	2025-02-15 14:17:18.822291	Failed
-77	3	2025-02-15 14:17:57.595417	Failed
 78	7	2025-02-15 14:17:57.599993	Failed
 79	8	2025-02-15 14:17:57.603678	Failed
 80	9	2025-02-15 14:18:18.762057	Failed
-81	3	2025-02-15 14:18:57.621086	Failed
 82	7	2025-02-15 14:18:57.625565	Failed
 83	8	2025-02-15 14:18:57.628714	Failed
 84	9	2025-02-15 14:19:18.752505	Failed
-85	3	2025-02-15 14:19:57.746096	Failed
 86	7	2025-02-15 14:19:57.750532	Failed
 87	8	2025-02-15 14:19:57.753263	Failed
 88	9	2025-02-15 14:20:18.898902	Failed
 89	10	2025-02-15 14:20:19.584265	Success
-90	3	2025-02-15 14:20:57.64845	Failed
 91	7	2025-02-15 14:20:57.653912	Failed
 92	8	2025-02-15 14:20:57.656559	Failed
 93	9	2025-02-15 14:21:18.821214	Failed
 94	10	2025-02-15 14:21:19.80556	Success
-95	3	2025-02-15 14:21:57.635663	Failed
 96	7	2025-02-15 14:21:57.640178	Failed
 97	8	2025-02-15 14:21:57.643523	Failed
 98	9	2025-02-15 14:22:18.770075	Failed
 99	10	2025-02-15 14:22:19.420356	Success
+101	7	2025-02-15 14:22:57.650361	Failed
+102	8	2025-02-15 14:22:57.653245	Failed
+103	9	2025-02-15 14:23:18.77366	Failed
+104	10	2025-02-15 14:23:19.663062	Success
+106	7	2025-02-15 14:23:57.659254	Failed
+107	8	2025-02-15 14:23:57.662246	Failed
+108	9	2025-02-15 14:24:18.830503	Failed
+109	10	2025-02-15 14:24:19.479863	Success
+111	7	2025-02-15 14:24:57.674581	Failed
+112	8	2025-02-15 14:24:57.677773	Failed
+113	9	2025-02-15 14:25:18.803479	Failed
+114	10	2025-02-15 14:25:19.251072	Success
+116	7	2025-02-15 15:59:33.830477	Failed
+117	8	2025-02-15 15:59:33.859057	Failed
+119	7	2025-02-15 16:06:53.799649	Failed
+120	8	2025-02-15 16:06:53.82745	Failed
+122	7	2025-02-15 18:00:00.283838	Failed
+123	8	2025-02-15 18:00:00.314046	Failed
+125	7	2025-02-15 19:08:01.603501	Failed
+126	8	2025-02-15 19:08:01.614934	Failed
 \.
 
 
 --
--- TOC entry 4932 (class 0 OID 16431)
+-- TOC entry 4936 (class 0 OID 16431)
 -- Dependencies: 216
 -- Data for Name: protocols_list; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -722,31 +770,41 @@ COPY public.protocols_list (protocol_id, protocol_name) FROM stdin;
 
 
 --
--- TOC entry 4934 (class 0 OID 16455)
+-- TOC entry 4938 (class 0 OID 16455)
 -- Dependencies: 218
 -- Data for Name: servers_list; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.servers_list (server_id, current_status, server_name, port, protocol_id, username, password, last_updated) FROM stdin;
-10	Healthy	httpbin.org	443	2	\N	\N	2025-02-15 14:19:27.258467
-3	Unhealthy	New Server	8080	1	\N	\N	2025-02-15 14:21:57.635663
-7	Unhealthy	New Server1	8080	1	\N	\N	2025-02-15 14:21:57.640178
-8	Unhealthy	New Server2	8080	1	\N	\N	2025-02-15 14:21:57.643523
-9	Unhealthy	google.com	8080	1	\N	\N	2025-02-15 14:22:18.770075
+COPY public.servers_list (server_id, current_status, server_name, port, protocol_id, username, password, last_updated, server_url) FROM stdin;
+7	Unhealthy	New Server1	8080	1	\N	\N	2025-02-15 19:08:01.603501	google.com
+9	Unhealthy	google.com	8080	1	\N	\N	2025-02-15 14:25:18.803479	google.com
+10	Healthy	httpbin.org	443	2	\N	\N	2025-02-15 14:25:19.251072	httpbin.org
+11	Healthy	 ftp.dlptest.com	22	3	\N	\N	2025-02-15 17:07:31.290008	httpbin.org
+12	Healthy	ser	80	2	\N	\N	2025-02-15 17:10:43.983188	httpbin.org
+14	Healthy	sers	80	2	use	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:11:02.65869	httpbin.org
+20	Healthy	 ftp.dlptest.coms	22	3	\N	\N	2025-02-15 17:14:22.869138	httpbin.org
+21	Healthy	 ftp.dlptest.com3	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:14:51.271731	httpbin.org
+22	Healthy	 ftp.dlptest.com4	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:18:53.16004	 ftp://ftp.dlptest.com/
+23	Healthy	 ftp.dlptest.com5	22	3	dlpuser	517c2ef201c15709d1adf6a4b404c78f:0390a83594cbdec150f021efa4cfe62ae7adf7abc33135e0a506104fee29ce80	2025-02-15 17:45:23.023391	 ftp://ftp.dlptest.com/
+25	Healthy	 ftp.dlptest.com6	22	3	\N	\N	2025-02-15 18:06:37.134542	 ftp://ftp.dlptest.com/
+26	Healthy	ftp.dlptest.com5	22	3	dlpuser	2288b5652b28474f720a339185f51831:70288db085a104953339d819c8f92a4f1a057df3207a4ab497a316c91aa6a37f	2025-02-15 21:08:44.975442	ftp.dlptest.com
+28	Healthy	ftp	22	3	dlpuser	d6b92cc4a0b115f658b7471b9200133f:fe7045f567c8ae19443edbee42b5cdc6b24076766dc18e07f6ce965f4f81a426	2025-02-15 21:14:31.447113	ftp.dlptest.com
+29	Healthy	ftp2	22	3	dlpuser	df93da30270e352aa4e807464f79a95c:5987694f38bf3d67b55a0ac52996f44de9ea50a66cffd7dabb151b0cafe930e3	2025-02-15 21:15:59.753536	ftp.dlptest.com
+8	Unhealthy	update-server	8080	1	\N	\N	2025-02-15 19:08:01.614934	https://update-server.com
 \.
 
 
 --
--- TOC entry 4945 (class 0 OID 0)
+-- TOC entry 4949 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: monitor_history_monitor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.monitor_history_monitor_id_seq', 99, true);
+SELECT pg_catalog.setval('public.monitor_history_monitor_id_seq', 126, true);
 
 
 --
--- TOC entry 4946 (class 0 OID 0)
+-- TOC entry 4950 (class 0 OID 0)
 -- Dependencies: 215
 -- Name: protocol_list_protocol_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -755,16 +813,16 @@ SELECT pg_catalog.setval('public.protocol_list_protocol_id_seq', 4, true);
 
 
 --
--- TOC entry 4947 (class 0 OID 0)
+-- TOC entry 4951 (class 0 OID 0)
 -- Dependencies: 217
 -- Name: servers_list_server_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.servers_list_server_id_seq', 10, true);
+SELECT pg_catalog.setval('public.servers_list_server_id_seq', 29, true);
 
 
 --
--- TOC entry 4780 (class 2606 OID 16537)
+-- TOC entry 4783 (class 2606 OID 16537)
 -- Name: monitor_history monitor_history_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -773,7 +831,7 @@ ALTER TABLE ONLY public.monitor_history
 
 
 --
--- TOC entry 4772 (class 2606 OID 16439)
+-- TOC entry 4775 (class 2606 OID 16439)
 -- Name: protocols_list protocol_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -782,7 +840,7 @@ ALTER TABLE ONLY public.protocols_list
 
 
 --
--- TOC entry 4774 (class 2606 OID 16441)
+-- TOC entry 4777 (class 2606 OID 16441)
 -- Name: protocols_list protocol_list_protocol_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -791,7 +849,7 @@ ALTER TABLE ONLY public.protocols_list
 
 
 --
--- TOC entry 4776 (class 2606 OID 16465)
+-- TOC entry 4779 (class 2606 OID 16465)
 -- Name: servers_list servers_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -800,7 +858,7 @@ ALTER TABLE ONLY public.servers_list
 
 
 --
--- TOC entry 4778 (class 2606 OID 16467)
+-- TOC entry 4781 (class 2606 OID 16467)
 -- Name: servers_list servers_list_server_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -809,7 +867,7 @@ ALTER TABLE ONLY public.servers_list
 
 
 --
--- TOC entry 4785 (class 2620 OID 16549)
+-- TOC entry 4789 (class 2620 OID 16568)
 -- Name: monitor_history monitor_success_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -817,7 +875,7 @@ CREATE TRIGGER monitor_success_trigger AFTER INSERT ON public.monitor_history FO
 
 
 --
--- TOC entry 4783 (class 2620 OID 16553)
+-- TOC entry 4786 (class 2620 OID 16553)
 -- Name: servers_list monitor_unhealthy_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -825,7 +883,7 @@ CREATE TRIGGER monitor_unhealthy_status_trigger AFTER UPDATE OF current_status O
 
 
 --
--- TOC entry 4786 (class 2620 OID 16546)
+-- TOC entry 4790 (class 2620 OID 16546)
 -- Name: monitor_history monitor_unsuccess_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -833,7 +891,7 @@ CREATE TRIGGER monitor_unsuccess_trigger AFTER INSERT ON public.monitor_history 
 
 
 --
--- TOC entry 4787 (class 2620 OID 16550)
+-- TOC entry 4791 (class 2620 OID 16570)
 -- Name: monitor_history monitor_unsuccessful_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -841,7 +899,15 @@ CREATE TRIGGER monitor_unsuccessful_trigger AFTER INSERT ON public.monitor_histo
 
 
 --
--- TOC entry 4784 (class 2620 OID 16554)
+-- TOC entry 4787 (class 2620 OID 16567)
+-- Name: servers_list notify_on_unhealthy_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER notify_on_unhealthy_status_trigger AFTER UPDATE ON public.servers_list FOR EACH ROW WHEN ((new.current_status = 'Unhealthy'::text)) EXECUTE FUNCTION public.notify_on_unhealthy_status();
+
+
+--
+-- TOC entry 4788 (class 2620 OID 16569)
 -- Name: servers_list server_status_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -849,7 +915,7 @@ CREATE TRIGGER server_status_trigger AFTER UPDATE ON public.servers_list FOR EAC
 
 
 --
--- TOC entry 4782 (class 2606 OID 16538)
+-- TOC entry 4785 (class 2606 OID 16538)
 -- Name: monitor_history monitor_history_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -858,7 +924,7 @@ ALTER TABLE ONLY public.monitor_history
 
 
 --
--- TOC entry 4781 (class 2606 OID 16468)
+-- TOC entry 4784 (class 2606 OID 16468)
 -- Name: servers_list servers_list_protocol_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -866,7 +932,7 @@ ALTER TABLE ONLY public.servers_list
     ADD CONSTRAINT servers_list_protocol_id_fkey FOREIGN KEY (protocol_id) REFERENCES public.protocols_list(protocol_id) ON DELETE CASCADE;
 
 
--- Completed on 2025-02-15 14:22:38
+-- Completed on 2025-02-15 21:17:20
 
 --
 -- PostgreSQL database dump complete
