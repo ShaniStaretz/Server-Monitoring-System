@@ -28,6 +28,10 @@ Make sure you have the following installed:
 * Node.js (v12 or higher)
 * PostgreSQL (v12 or higher)
 
+  ** used for development:
+      * Node.js (v18.5)
+      * PostgreSQL(v16)
+
 ## Environment Setup
 
 1. Clone the repository:
