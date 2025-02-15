@@ -67,40 +67,6 @@
 			"response": []
 		},
 		{
-			"name": "Add Monitory Log to history",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"server_name\": \"New Server\",\r\n  \"port\": 8080,\r\n  \"protocol_id\": 1\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:3000/servers",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "3000",
-					"path": [
-						"servers"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "Update a Server",
 			"request": {
 				"method": "PUT",
