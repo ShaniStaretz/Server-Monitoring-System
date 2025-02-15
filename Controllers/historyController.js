@@ -3,6 +3,8 @@ const {
   getIsServerHealthy,
 } = require("../services/historyService");
 
+const { REGEX_PARTTERNS } =require( "../utils/REGEX_PATTERNS");
+
 // Route handler function
 const handleGetExistServerHistory = async (req, res) => {
   const serverId = parseInt(req.params.serverId); // Get the serverId from the URL
@@ -57,9 +59,7 @@ const handleIsServerHealthyByTimestamp = async (req, res) => {
   }
 };
 const isValidDateTime = (timestamp) => {
-  const regex =
-    /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-  return regex.test(timestamp);
+  return REGEX_PARTTERNS.date_time.test(timestamp);
 };
 
 module.exports = {

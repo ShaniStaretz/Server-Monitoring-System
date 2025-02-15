@@ -5,6 +5,7 @@ const {
   deleteExistSerever,
   getExistSerever,
 } = require("../services/serversService");
+const { REGEX_PARTTERNS } =require( "../utils/REGEX_PATTERNS");
 
 // Route handler function
 const handleGetServersList = async (req, res) => {
@@ -122,8 +123,7 @@ const handleGetExistServer = async (req, res) => {
 };
 
 const isValidURL = (server_url) => {
-  const regex = /^(ftp|http|https|ssh):\/\/([^:/]+)(?::(\d+))?/i;
-  return regex.test(server_url);
+  return REGEX_PARTTERNS.server_url.test(server_url);
 };
 module.exports = {
   handleGetServersList,
