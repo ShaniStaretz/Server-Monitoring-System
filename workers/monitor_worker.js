@@ -5,16 +5,16 @@ const { executeQuery } = require("../db/db_functions");
 // Automated Worker to Monitor Server Status
 
 const monitorServerStatus = () => {
-  console.log("start worker");
-  const intervalId = setInterval(checkServersHealth, 5000); // Runs every 60 seconds
+  console.log("[worker] Start worker");
+  const intervalId = setInterval(checkServersHealth, 6000); // Runs every 60 seconds
 
   return intervalId;
 };
 
 const checkServersHealth = async () => {
   try {
-    const result = await executeQuery("SELECT 1"); // Simple query to check DB connection
-    console.log(`[Worker] Server is healthy at ${new Date().toISOString()}`);
+    // const result = await executeQuery("SELECT 1"); // Simple query to check DB connection
+    // console.log(`[Worker] Server is healthy at ${new Date().toISOString()}`);
   } catch (err) {
     console.error(`[Worker] Server issue detected: ${err.message}`);
   }

@@ -1,5 +1,6 @@
-const { executeQuery } = require("./db_functions"); // Import the pool from your pool.js
+const { executeQuery } = require("./db_functions"); 
 
+//List of triggers
 const triggers = [
   {
     name: "server_status_trigger",
@@ -27,25 +28,33 @@ const triggers = [
   {
     name: "monitor_success_trigger",
     function: `
-          CREATE OR REPLACE FUNCTION update_server_status_on_success()
+         CREATE OR REPLACE FUNCTION update_server_status_on_success()
           RETURNS TRIGGER AS $$
+          DECLARE
+          success_count INT;
           BEGIN
-              IF (
-                  SELECT COUNT(*) 
-                  FROM monitor_history 
-                  WHERE server_id = NEW.server_id 
-                  AND status = 'Success'
-                  ORDER BY timestamp DESC
+              -- Count the last 5 records where status is 'Success'
+              SELECT COUNT(*) INTO success_count
+              FROM (
+                  SELECT mh.status
+                  FROM monitor_history mh
+                  WHERE mh.server_id = NEW.server_id
+                  ORDER BY mh.timestamp DESC
                   LIMIT 5
-              ) = 5 THEN
-                  UPDATE servers_list
-                  SET current_status = 'Healthy',
-                      last_updated = CURRENT_TIMESTAMP
-                  WHERE server_id = NEW.server_id;
+              ) AS last_five
+              WHERE last_five.status = 'Success';
+
+              -- If all 5 records are 'Success', update servers_list
+              IF success_count = 5 THEN
+                  UPDATE servers_list sl
+                  SET current_status = 'Healthy', last_updated = CURRENT_TIMESTAMP
+                  WHERE sl.server_id = NEW.server_id;
               END IF;
+
               RETURN NEW;
           END;
           $$ LANGUAGE plpgsql;
+
       `,
     trigger: `
           CREATE TRIGGER monitor_success_trigger
@@ -59,19 +68,25 @@ const triggers = [
     function: `
           CREATE OR REPLACE FUNCTION update_server_status_on_unsuccessful()
           RETURNS TRIGGER AS $$
+          DECLARE
+              failed_count INT;
           BEGIN
-              IF (
-                  SELECT COUNT(*) 
-                  FROM monitor_history 
-                  WHERE server_id = NEW.server_id 
-                  AND status = 'Unsuccessful'
-                  ORDER BY timestamp DESC
+              -- Count the last 3 records where status is 'Failed'
+              SELECT COUNT(*) INTO failed_count
+              FROM (
+                  SELECT mh.status
+                  FROM monitor_history mh
+                  WHERE mh.server_id = NEW.server_id
+                  ORDER BY mh.timestamp DESC
                   LIMIT 3
-              ) = 3 THEN
-                  UPDATE servers_list
-                  SET current_status = 'Unhealthy',
-                      last_updated = CURRENT_TIMESTAMP
-                  WHERE server_id = NEW.server_id;
+              ) AS last_three
+              WHERE last_three.status = 'Failed';
+
+              -- If all 3 records are 'Failed', update servers_list
+              IF failed_count = 3 THEN
+                  UPDATE servers_list sl
+                  SET current_status = 'Unhealthy', last_updated = CURRENT_TIMESTAMP
+                  WHERE sl.server_id = NEW.server_id;
               END IF;
               RETURN NEW;
           END;
@@ -96,34 +111,34 @@ const triggerExists = async (triggerName) => {
   return result.rowCount > 0;
 };
 
-// Function to create all triggers from the list
+// Create all triggers from the list
 const createTriggers = async () => {
   try {
-    console.log("Setting up database triggers...");
+    console.log("[initTriggers] Setting up database triggers...");
 
     await Promise.all(
       triggers.map(async (t) => {
-        console.log(`Checking if trigger function for: ${t.name} exists...`);
+        console.log(`[initTriggers] Checking if trigger function for: ${t.name} exists...`);
         await executeQuery(t.function); // Always create or replace the function
 
         const exists = await triggerExists(t.name);
         if (!exists) {
-          console.log(`Creating trigger: ${t.name}`);
+          console.log(`[initTriggers] Creating trigger: ${t.name}`);
           await executeQuery(t.trigger);
         } else {
-          console.log(`Trigger '${t.name}' already exists, skipping creation.`);
+          console.log(`[initTriggers] Trigger '${t.name}' already exists, skipping creation.`);
         }
-        console.log(`Creating trigger function for: ${t.name}`);
+        console.log(`[initTriggers] Creating trigger function for: ${t.name}`);
         await executeQuery(t.function);
 
-        console.log(`Creating trigger: ${t.name}`);
+        console.log(`[initTriggers] Creating trigger: ${t.name}`);
         await executeQuery(t.trigger);
       })
     );
 
-    console.log("All triggers set up successfully!");
+    console.log("[initTriggers] All triggers set up successfully!");
   } catch (error) {
-    console.error("Error setting up triggers:", error);
+    console.error("[initTriggers] Error setting up triggers:", error);
   }
 };
 module.exports = createTriggers;

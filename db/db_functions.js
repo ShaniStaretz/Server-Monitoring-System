@@ -12,35 +12,14 @@ const pool = new Pool({
 check_onnection();
 
 pool.on("error", function (err, client) {
-  console.error("Idle client error", err.message, err.stack);
+  console.error("[db] Idle client error", err.message, err.stack);
 });
-
-// Listen for notifications on the 'server_status_change' channel
-pool.query("LISTEN server_status_change");
-
-// Event listener for notifications
-pool.on("notification", (msg) => {
-  console.log("Received notification:", msg.payload);
-
-  // Check if the notification is about an unhealthy server
-  if (msg.payload.includes("Unhealthy")) {
-    // Parse the server ID and status from the notification payload
-    const serverId = msg.payload.split(" ")[1]; // Assuming the message is like 'Server <id> is now Unhealthy'
-    const subject = `Alert: Server ${serverId} is Unhealthy`;
-    const text = `The server with ID ${serverId} is now marked as Unhealthy.`;
-    const emailTo = "recipient@example.com";
-
-    // Send the email
-    sendEmail(subject, text, emailTo);
-  }
-});
-console.log("Listening for PostgreSQL notifications...");
 
 async function check_onnection() {
   try {
-    console.debug("try db pool");
+    console.debug("[db] Try db pool");
     var client = await pool.connect();
-    console.info("db pool successful");
+    console.info("[db] db pool successful");
   } catch (error) {
     console.error(
       "[db] Error connecting to db:" +
@@ -53,6 +32,40 @@ async function check_onnection() {
   }
   pool.removeAllListeners();
 }
+
+async function listenForNotifications() {
+  const client = await pool.connect(); // Get a client from the pool
+
+  try {
+    console.info("[db] Listening for PostgreSQL notifications...");
+
+    // Start listening to the 'server_status_change' channel
+    await client.query("LISTEN server_status_change");
+
+    // Handle incoming notifications
+    client.on("notification", (msg) => {
+      console.debug("[db] Notification received:", msg.payload);
+    });
+
+    // Keep the client connection alive
+    client.on("end", () => {
+      console.info("[db] Listener client disconnected");
+    });
+
+    process.on("SIGINT", async () => {
+      console.info(" [db] Closing pool connection...");
+      client.release(); // Release back to the pool
+      process.exit();
+    });
+  } catch (error) {
+    console.error("[db] Error listening for notifications:", error);
+    client.release(); // Release client back to the pool
+  }
+}
+// Run the listener after a short delay (optional)
+setTimeout(() => {
+  listenForNotifications();
+}, 2000);
 
 async function executeFunction(is_get, function_name, args = null) {
   let res = { result: null, error: null };
@@ -76,7 +89,6 @@ async function executeFunction(is_get, function_name, args = null) {
       client.release();
     }
   } catch (err) {
-    console.error(err);
     res.error = err.message;
     console.error(
       "[db_queries] Error connecting to db:" +
@@ -104,7 +116,7 @@ async function executeQuery(query_Str, params = null) {
   } catch (err) {
     res.error = err.message;
     console.error(
-      "[db_queries] Error connecting to db" +
+      "[db] Error connecting to db" +
         err.message +
         " with code:" +
         err.code

@@ -9,6 +9,7 @@ const serversRoutes = require("./routes/serversRoutes");
 const monitorHistoryRoutes  = require("./routes/historyRoutes");
 const app = express();
 const port = process.env.PORT || 5000;
+// const {listenForNotifications} = require('./db/db_functions'); 
 
 // Middleware to parse JSON bodies
 app.use(bodyParser.json()); // Or use express.json() for Express v4.16+
@@ -23,7 +24,7 @@ const serverData = {
 };
 
 const intervalId = monitorServerStatus();
-
+// listenForNotifications()
 // Test Route
 app.get("/", (req, res) => {
   res.json({
@@ -33,7 +34,7 @@ app.get("/", (req, res) => {
 });
 
 const server = app.listen(port, async () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`[server] Server is running on http://localhost:${port}`);
   // Initialize tables first
   await initTables();
   // Initialize triggers
