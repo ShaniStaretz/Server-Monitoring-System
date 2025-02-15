@@ -52,7 +52,7 @@ async function listenForNotifications() {
         const serverId = msg.payload.split(" ")[1]; // Assuming the message is like 'Server <id> is now Unhealthy'
         const subject = `Alert: Server ${serverId} is Unhealthy`;
         const text = `The server with ID ${serverId} is now marked as Unhealthy.`;
-        const emailTo = "recipient@example.com";
+        const emailTo = process.env.EMAIL_recipient;
 
         // Send the email
         sendEmail(subject, text, emailTo);
