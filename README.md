@@ -201,7 +201,8 @@ Ensure your PostgreSQL database is set up with all necessary functions, triggers
 * Trigger or function creation errors: Ensure that the functions and triggers have been properly created in your PostgreSQL database.
 
 
-## updated project:
+## *** **updated project** ***:
+* the server can be any string possible, but still UNIQUE in the DB
 * removed from servers_list the port and protocol_id fields, no need for them to check connection with the remote server.
 * the worker get all servers from the DB, for each server splite server_url and get the protocol and the port automatically.
 * left the protocols_list table and it's functions related.
