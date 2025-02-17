@@ -206,4 +206,4 @@ Ensure your PostgreSQL database is set up with all necessary functions, triggers
 * removed from servers_list the port and protocol_id fields, no need for them to check connection with the remote server.
 * the worker get all servers from the DB, for each server splite server_url and get the protocol and the port automatically.
 * left the protocols_list table and it's functions related.
-
+* fixed bugs in ftp connection, now it supported urls like ftp://ftp.dlptest.com/ or ftp.dlptest.com
