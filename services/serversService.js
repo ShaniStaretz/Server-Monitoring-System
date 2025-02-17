@@ -1,6 +1,6 @@
 const { executeFunction } = require("../db/db_functions");
 const { encryptPassword, decryptPassword } = require("../utils/encryptions");
-const parseUrl = require("../utils/parseUrl");
+
 const getServersList = async () => {
   const response = await executeFunction(true, "get_all_servers_list");
 

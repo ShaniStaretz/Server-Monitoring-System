@@ -70,7 +70,7 @@ const handlePutUpdateExistServer = async (req, res) => {
       throw {
         status: 400,
         message:
-          "invalid url format, must at least in format: protocol://host,in protocols:HTTP, HTTPS, FTP, SSH only",
+          "invalid url format, must at least in format: protocol://host, in protocols:HTTP, HTTPS, FTP, SSH only",
       };
     }
     // Call the updateServer function with the data
@@ -117,7 +117,7 @@ const handleGetExistServer = async (req, res) => {
     if (!serverId) {
       throw { status: 400, message: "invalid input, missing serverId" };
     }
-    // Call the updateServer function with the data
+    // Call the getExistSerever function with the data
     const server = await getExistSerever(serverId);
 
     // Respond with success message
@@ -129,7 +129,7 @@ const handleGetExistServer = async (req, res) => {
       .json({ error: error.message || "Internal Server Error" });
   }
 };
-
+// testing server_url according to regex
 const isValidURL = (server_url) => {
   return REGEX_PARTTERNS.SERVER_URL.test(server_url);
 };
