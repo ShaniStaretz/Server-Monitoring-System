@@ -7,6 +7,7 @@ const SECRET_KEY = crypto.createHash('sha256').update( process.env.SECRET_KEY ||
 
 // Function to encrypt password
 const encryptPassword = (password) => {
+  
   const iv = crypto.randomBytes(16); // Initialization Vector
 
   //Creates and returns a Cipher object, with the given algorithm, key and initialization vector (iv).
@@ -23,6 +24,7 @@ const encryptPassword = (password) => {
 
 // Function to decrypt password
 const decryptPassword = (encryptedPassword) => {
+  
   const [ivHex, encryptedText] = encryptedPassword.split(":");
   const iv = Buffer.from(ivHex, "hex");
   const decipher = crypto.createDecipheriv(

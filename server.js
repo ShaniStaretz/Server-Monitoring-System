@@ -2,17 +2,16 @@ require("dotenv").config();
 const express = require("express");
 const initTables = require("./db/initTables");
 const bodyParser = require('body-parser');
-const createTriggers = require("./db/initTriggers"); // Import the initTables function
+const createTriggers = require("./db/initTriggers"); 
 const monitorServerStatus = require("./workers/monitor_worker");
 const shutdown = require("./utils/shutdown");
 const serversRoutes = require("./routes/serversRoutes");
 const monitorHistoryRoutes  = require("./routes/historyRoutes");
 const app = express();
 const port = process.env.PORT || 5000;
-// const {listenForNotifications} = require('./db/db_functions'); 
 
 // Middleware to parse JSON bodies
-app.use(bodyParser.json()); // Or use express.json() for Express v4.16+
+app.use(bodyParser.json()); 
 // Use the routes
 app.use("/api/history",monitorHistoryRoutes);
 app.use("/api/servers",serversRoutes);
@@ -24,7 +23,7 @@ const serverData = {
 };
 
 const intervalId = monitorServerStatus();
-// listenForNotifications()
+
 // Test Route
 app.get("/", (req, res) => {
   res.json({

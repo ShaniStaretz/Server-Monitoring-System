@@ -38,12 +38,19 @@ const handlePostAddNewServer = async (req, res) => {
         message:
           "invalid url format, must at least in format: protocol://host,in protocols:HTTP, HTTPS, FTP, SSH only",
       };
+      if ((password && !username) || (username && !password)) {
+        throw {
+          status: 400,
+          message:
+            "if invalid username or password",
+        };
+      }
     }
     const server_id = await addNewSerever(req.body);
     console.log(`added new server to the system with id: ${server_id}`);
     res.status(200).json({ message: "the server was added succefully" });
   } catch (error) {
-    console.error("Error in handleGetServersList: ", error.message);
+    console.error("Error in handlePostAddNewServer: ", error.message);
     res
       .status(error.status ? error.status : 500)
       .json({ error: error.message || "Internal Server Error" });
@@ -63,7 +70,7 @@ const handlePutUpdateExistServer = async (req, res) => {
       throw {
         status: 400,
         message:
-          "invalid url format, must at least in format: protocol://host,in protocols:HTTP, HTTPS, FTP, SSH only",
+          "invalid url format, must at least in format: protocol://host, in protocols:HTTP, HTTPS, FTP, SSH only",
       };
     }
     // Call the updateServer function with the data
@@ -110,7 +117,7 @@ const handleGetExistServer = async (req, res) => {
     if (!serverId) {
       throw { status: 400, message: "invalid input, missing serverId" };
     }
-    // Call the updateServer function with the data
+    // Call the getExistSerever function with the data
     const server = await getExistSerever(serverId);
 
     // Respond with success message
@@ -122,9 +129,9 @@ const handleGetExistServer = async (req, res) => {
       .json({ error: error.message || "Internal Server Error" });
   }
 };
-
+// testing server_url according to regex
 const isValidURL = (server_url) => {
-  return REGEX_PARTTERNS.server_url.test(server_url);
+  return REGEX_PARTTERNS.SERVER_URL.test(server_url);
 };
 module.exports = {
   handleGetServersList,

@@ -1,6 +1,6 @@
 const { executeFunction } = require("../db/db_functions");
 const { encryptPassword, decryptPassword } = require("../utils/encryptions");
-const parseUrl = require("../utils/parseUrl");
+
 const getServersList = async () => {
   const response = await executeFunction(true, "get_all_servers_list");
 
@@ -18,10 +18,7 @@ const getServersList = async () => {
 
 const addNewSerever = async (serverDetails) => {
   const { server_url, server_name, username, password } = serverDetails;
-  const { protocol_name, port } = parseUrl(server_url);
-  let values = [server_name.trim(), server_url.trim(), port];
-  const protocol_id = await getProtocolIdByName(protocol_name.trim());
-  values.push(protocol_id);
+  let values = [server_name.trim(), server_url.trim()];
   if (password) {
     const encryptedPassword = encryptPassword(password.trim());
     values.push(username);
@@ -44,14 +41,10 @@ const addNewSerever = async (serverDetails) => {
 
 const udpateExistSerever = async (serverId, serverDetails) => {
   const { server_url, server_name, username, password } = serverDetails;
-  const { protocol_name, port } = parseUrl(server_url);
 
   let response;
-  let values = [serverId, server_name, server_url, port];
-  if (protocol_name) {
-    const protocol_id = await getProtocolIdByName(protocol_name);
-    values.push(protocol_id);
-  }
+  let values = [serverId,server_url, server_name];
+ 
   if (password) {
     const encryptedPassword = encryptPassword(password);
     values.push(username);
@@ -98,8 +91,9 @@ const getExistSerever = async (serverId) => {
     throw { status: 500, message: response.error.message };
   }
   let server = response.result.rows[0];
-  if(server.password)
-  {server.password = decryptPassword(server.password);}
+  if (server.password) {
+    server.password = decryptPassword(server.password);
+  }
   return server;
 };
 

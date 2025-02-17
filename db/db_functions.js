@@ -47,6 +47,7 @@ async function listenForNotifications() {
     client.on("notification", (msg) => {
       console.debug("[db] Notification received:", msg.payload);
       // Check if the notification is about an unhealthy server
+    
       if (msg.payload.includes("Unhealthy")) {
         // Parse the server ID and status from the notification payload
         const serverId = msg.payload.split(" ")[1]; // Assuming the message is like 'Server <id> is now Unhealthy'

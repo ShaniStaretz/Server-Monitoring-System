@@ -5,7 +5,7 @@ const {
   handleIsServerHealthyByTimestamp,
 } = require("../Controllers/historyController");
 
-historyRouter.get("/:serverId", handleGetExistServerHistory); //for testing
+historyRouter.get("/:serverId", handleGetExistServerHistory); 
 historyRouter.get("/health-status/:serverId", handleIsServerHealthyByTimestamp);
 
 module.exports = historyRouter;

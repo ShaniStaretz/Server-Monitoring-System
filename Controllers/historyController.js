@@ -59,7 +59,7 @@ const handleIsServerHealthyByTimestamp = async (req, res) => {
   }
 };
 const isValidDateTime = (timestamp) => {
-  return REGEX_PARTTERNS.date_time.test(timestamp);
+  return REGEX_PARTTERNS.DATE_TIME.test(timestamp);
 };
 
 module.exports = {
