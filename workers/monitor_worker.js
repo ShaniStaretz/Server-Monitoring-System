@@ -3,6 +3,7 @@ const { Client } = require("ssh2");
 const ftp = require("basic-ftp");
 const { addMonitoryLogByServerId } = require("../services/historyService");
 const { getServersList } = require("../services/serversService");
+const parseUrl =require("../utils/parseUrl")
 // Automated Worker to Monitor Server Status
 
 const monitorServerStatus = () => {
@@ -34,41 +35,20 @@ const checkServersHealth = async () => {
   }
 };
 
-const parseUrl = (url) => {
-  const regex = /^(ftp|http|https|ssh):\/\/([^:/]+)(?::(\d+))?/i;
-  const match = url.match(regex);
-
-  if (match) {
-    const protocol = match[1]; // The protocol (http, https, ftp, ws, wss)
-    const host = match[2]; // The host (domain or IP address)
-    const port =
-      match[3] ||
-      (protocol === "https"
-        ? "443"
-        : protocol === "http"
-        ? "80"
-        : protocol === "ftp"
-        ? "21"
-        : "22"); // Default port based on protocol
-
-    return { protocol, host, port };
-  }
-
-  return null; // Return null if no match is found
-};
 
 const checkServerHealth = async (server) => {
-  const { protocol_name, server_name, port, username, password } = server;
-  switch (protocol_name) {
+  const  { protocol, host, port }=parseUrl(server.server_url)
+  const {  username, password } = server;
+  switch (protocol) {
     case "HTTP":
     case "HTTPS":
-      return await checkHttpConnection(protocol_name, server_name, port);
+      return await checkHttpConnection(protocol, host, port);
       break;
     case "SSH":
-      return await checkSshConnection(server_name, port, username, password);
+      return await checkSshConnection(host, port, username, password);
       break;
     case "FTP":
-      return await checkFtpConnection(server_name, port, username, password);
+      return await checkFtpConnection(host, port, username, password);
     default:
       break;
   }
