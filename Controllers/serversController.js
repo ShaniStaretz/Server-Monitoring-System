@@ -131,7 +131,7 @@ const handleGetExistServer = async (req, res) => {
 };
 
 const isValidURL = (server_url) => {
-  return REGEX_PARTTERNS.server_url.test(server_url);
+  return REGEX_PARTTERNS.SERVER_URL.test(server_url);
 };
 module.exports = {
   handleGetServersList,

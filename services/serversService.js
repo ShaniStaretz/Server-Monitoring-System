@@ -41,7 +41,6 @@ const addNewSerever = async (serverDetails) => {
 
 const udpateExistSerever = async (serverId, serverDetails) => {
   const { server_url, server_name, username, password } = serverDetails;
-  // const { protocol_name, port } = parseUrl(server_url);
 
   let response;
   let values = [serverId,server_url, server_name];

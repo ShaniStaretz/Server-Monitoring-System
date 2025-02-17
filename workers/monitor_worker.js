@@ -3,7 +3,7 @@ const { Client } = require("ssh2");
 const ftp = require("basic-ftp");
 const { addMonitoryLogByServerId } = require("../services/historyService");
 const { getServersList } = require("../services/serversService");
-const parseUrl =require("../utils/parseUrl")
+const parseUrl = require("../utils/parseUrl");
 // Automated Worker to Monitor Server Status
 
 const monitorServerStatus = () => {
@@ -35,19 +35,23 @@ const checkServersHealth = async () => {
   }
 };
 
-
 const checkServerHealth = async (server) => {
-  const  { protocol, host, port }=parseUrl(server.server_url)
-  const {  username, password } = server;
-  switch (protocol) {
-    case "HTTP":
-    case "HTTPS":
+  console.log(
+    `[worker] will check connection to server with url ${server.server_url}`
+  );
+  const { protocol_name, host, port } = parseUrl(server.server_url);
+
+  const { username, password } = server;
+
+  switch (protocol_name) {
+    case "http":
+    case "https":
       return await checkHttpConnection(protocol, host, port);
       break;
-    case "SSH":
+    case "ssh":
       return await checkSshConnection(host, port, username, password);
       break;
-    case "FTP":
+    case "ftp":
       return await checkFtpConnection(host, port, username, password);
     default:
       break;
@@ -56,6 +60,7 @@ const checkServerHealth = async (server) => {
 };
 
 const checkHttpConnection = async (protocol, host, port) => {
+  console.log(`[worker] Will check HTTP/HTTPS connection`);
   const url = `${protocol}://${host}:${port}`;
   const start = Date.now(); // Start time
   try {
@@ -82,6 +87,7 @@ const checkHttpConnection = async (protocol, host, port) => {
 };
 
 const checkFtpConnection = async (host, port, username, password) => {
+  console.log(`[worker] Will check FTP connection`);
   const client = new ftp.Client();
   client.ftp.verbose = true;
   const start = Date.now(); // Start time
@@ -89,7 +95,7 @@ const checkFtpConnection = async (host, port, username, password) => {
     const response = await client.access({
       host: host,
       port: port,
-      user: username, // Or provide your FTP user credentials
+      user: username,
       password: password,
     });
     const latency = Date.now() - start; // Calculate latency
@@ -108,6 +114,7 @@ const checkFtpConnection = async (host, port, username, password) => {
 };
 
 const checkSshConnection = async (host, port, username, password) => {
+  console.log(`[worker] Will check SSH connection`);
   const connection = new Client();
   const start = Date.now(); // Start time
   try {
