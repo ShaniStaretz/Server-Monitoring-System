@@ -1,8 +1,8 @@
 const { REGEX_PARTTERNS } = require("../utils/REGEX_PATTERNS");// import regexs
 //get url and split it and return its protocol,host, port according to regex
-const parseUrl = (url) => {
+const parseUrl = (url, validProtocols = ["ftp", "http", "https", "ssh"]) => {
   url = url.trim();
-
+let regex=REGEX_PARTTERNS.SERVER_URL
   const match = url.match(REGEX_PARTTERNS.SERVER_URL);
 
   if (match) {
