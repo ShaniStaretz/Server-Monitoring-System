@@ -48,16 +48,12 @@ const servers: Server[] = [
   },
 ];
 
-const Main: React.FC = () => {
+const ServersTable: React.FC = () => {
   return (
     <Box className="myBox">
-      {/* Title */}
-      <Typography variant="h3" color="primary" className="myTypography">
-        Server Monitoring System
-      </Typography>
       <TableContainer component={Paper} className="myTableContainer">
         <Typography variant="h5" align="center">
-          <h2>Server Monitoring Table</h2>
+          Server Monitoring Table
         </Typography>
         <Table className="myTable">
           <TableHead>
@@ -103,4 +99,4 @@ const Main: React.FC = () => {
   );
 };
 
-export default Main;
+export default ServersTable;
