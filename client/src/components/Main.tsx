@@ -11,6 +11,9 @@ const Main = () => {
         <Button component={Link} to="/" variant="contained">
           Home
         </Button>
+        <Button component={Link} to="/servers/add" variant="contained">
+          Add New Server
+        </Button>
         <Button component={Link} to="/servers" variant="contained">
           Servers Table
         </Button>

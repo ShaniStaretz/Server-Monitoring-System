@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import * as React from "react";
+
 const Home: React.FC = () => {
   return (
     <Box className="myBox">
