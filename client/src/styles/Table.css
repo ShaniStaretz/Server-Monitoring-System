@@ -1,0 +1,53 @@
+/* Table.css */
+
+.myBox {
+  width: 80%;
+  margin: auto;
+  text-align: center;
+  margin-top: 16px; /*mt=2, 2*8px*/
+}
+
+.myTypography {
+  margin-bottom: 24px;
+  font-weight: bold;
+}
+.myTableContainer {
+  width: 80%;
+  margin: auto;
+  margin-top: 32px;
+}
+
+/* styles.css */
+.myTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.myTable th,
+.myTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.myTable th {
+  background-color: #f2f2f2;
+  color: black;
+}
+
+.myTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.myTable tr:hover {
+  background-color: #ddd;
+}
+
+.myTable input[type="password"] {
+  border: none;
+  background-color: transparent;
+  padding: 4px;
+  width: 100%;
+  text-align: left;
+  outline: none; /* Remove focus border */
+}
