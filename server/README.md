@@ -4,7 +4,7 @@
 
 The Servers Monitoring System is designed to monitor server health, track status changes, and send real-time notifications. This solution integrates with a PostgreSQL database, using functions, triggers, and a Node.js backend to provide alerts based on server health.
 
-The application follows the MVC (Model-View-Controller) architecture, which ensures a clean separation of concerns and modularizes the codebase for easier maintenance and scalability.
+The server follows the MVC (Model-View-Controller) architecture.
 
 ### Key Features
 
@@ -72,7 +72,7 @@ Run the following command to start the Node.js server:
 ```
 npm start
 ```
-this will launch the Node.js server on http://localhost:3000.
+this will launch the Node.js server on http://localhost:5000.
 
 2. **Accessing the API:**
 
