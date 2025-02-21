@@ -43,7 +43,7 @@
   background-color: #ddd;
 }
 
-.myTable input[type="password"] {
+.myTable >input[type="password"] {
   border: none;
   background-color: transparent;
   padding: 4px;
